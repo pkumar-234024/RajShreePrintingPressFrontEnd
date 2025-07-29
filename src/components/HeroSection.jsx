@@ -8,6 +8,7 @@ import { CarouselCustomNavigation } from './CarouselCustomNavigation'
 import { Footer } from './Footer'
 import About from './About'
 import Contactus from './Contactus'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -17,6 +18,8 @@ const navigation = [
 
 export default function HeroSection() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const location = useLocation()
+  const isCardDetail = location.pathname.includes('/card/')
 
   return (
     <div className="bg-white">
@@ -48,15 +51,10 @@ export default function HeroSection() {
           </div>
           <div className="hidden lg:flex lg:gap-x-12">
             {navigation.map((item) => (
-              <a key={item.name} href={item.href} className="text-sm/6 font-semibold text-gray-900">
+              <Link key={item.name} to={item.href} className="text-sm/6 font-semibold text-gray-900">
                 {item.name}
-              </a>
+              </Link>
             ))}
-          </div>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a href="#" className="text-sm/6 font-semibold text-gray-900">
-              Log in <span aria-hidden="true">&rarr;</span>
-            </a>
           </div>
         </nav>
         <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
@@ -93,14 +91,6 @@ export default function HeroSection() {
                     </a>
                   ))}
                 </div>
-                <div className="py-6">
-                  <a
-                    href="#"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                  >
-                    Log in
-                  </a>
-                </div>
               </div>
             </div>
           </DialogPanel>
@@ -121,13 +111,18 @@ export default function HeroSection() {
           />
         </div>
 
+        {!isCardDetail && (
+          <>
+            <div className="flex justify-center items-center mt-10">
+              <div className="w-full max-w-3x2 h-[300px]">
+                <CarouselCustomNavigation />
+              </div>
+            </div>
+            <FeatureSection />
+          </>
+        )}
         
-        <div className="flex justify-center items-center mt-10">
-          <div className="w-full max-w-3x2 h-[300px]">
-            <CarouselCustomNavigation />
-          </div>
-        </div>
-        <FeatureSection />
+        <Outlet />
         <Footer />
         
         <div
