@@ -4,12 +4,15 @@ import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import FeatureSection from './FeatureSection'
+import { CarouselCustomNavigation } from './CarouselCustomNavigation'
+import { Footer } from './Footer'
+import About from './About'
+import Contactus from './Contactus'
 
 const navigation = [
-  { name: 'Product', href: '#' },
-  { name: 'Features', href: '#' },
-  { name: 'Marketplace', href: '#' },
-  { name: 'Company', href: '#' },
+  { name: 'Home', href: '/' },
+  { name: 'About', href: '/about' },
+  { name: 'Contact Us', href: '/contactus' },
 ]
 
 export default function HeroSection() {
@@ -21,12 +24,16 @@ export default function HeroSection() {
         <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
           <div className="flex lg:flex-1">
             <a href="#" className="-m-1.5 p-1.5">
-              <span className="sr-only">Your Company</span>
+              <span className="sr-only">RajShree Printing Press</span>
               <img
                 alt=""
                 src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
                 className="h-8 w-auto"
               />
+            </a>
+            <a href="#" className="-m-1.5 p-1.5">
+              <span className="text-2xl font-bold">RajShree Printing Press</span>
+              
             </a>
           </div>
           <div className="flex lg:hidden">
@@ -114,7 +121,15 @@ export default function HeroSection() {
           />
         </div>
 
+        
+        <div className="flex justify-center items-center mt-10">
+          <div className="w-full max-w-3x2 h-[300px]">
+            <CarouselCustomNavigation />
+          </div>
+        </div>
         <FeatureSection />
+        <Footer />
+        
         <div
           aria-hidden="true"
           className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
