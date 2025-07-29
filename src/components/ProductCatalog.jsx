@@ -204,6 +204,11 @@ export default function ProductCatalog() {
                     src={product.image}
                     alt={product.name}
                     className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      // Fallback to a placeholder image if the image fails to load
+                      e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
+                      e.target.onerror = null; // Prevent infinite loop
+                    }}
                   />
                   {!product.inStock && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs">

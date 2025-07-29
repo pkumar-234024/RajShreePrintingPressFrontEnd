@@ -10,6 +10,9 @@ import { CartProvider } from './context/CartContext'
 import AdminLogin from './components/AdminLogin'
 import AdminDashboard from './components/AdminDashboard'
 import AdminProductForm from './components/AdminProductForm'
+import AdminOrders from './components/AdminOrders'
+import AdminCategories from './components/AdminCategories'
+import AdminProducts from './components/AdminProducts'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -35,6 +38,12 @@ function App() {
             </ProtectedRoute>
           } />
           
+          <Route path="/admin/products" element={
+            <ProtectedRoute>
+              <AdminProducts />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/admin/products/add" element={
             <ProtectedRoute>
               <AdminProductForm />
@@ -44,6 +53,18 @@ function App() {
           <Route path="/admin/products/edit/:id" element={
             <ProtectedRoute>
               <AdminProductForm />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/orders" element={
+            <ProtectedRoute>
+              <AdminOrders />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/categories" element={
+            <ProtectedRoute>
+              <AdminCategories />
             </ProtectedRoute>
           } />
         </Routes>

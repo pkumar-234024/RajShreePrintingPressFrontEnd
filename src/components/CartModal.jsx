@@ -103,6 +103,11 @@ export default function CartModal({ isOpen, onClose, cartItems, updateCart, remo
                     alt={item.name} 
                     className="w-16 h-16 object-cover rounded cursor-pointer"
                     onClick={() => handleProductClick(item.id)}
+                    onError={(e) => {
+                      // Fallback to a placeholder image if the image fails to load
+                      e.target.src = "https://via.placeholder.com/64x64?text=Image";
+                      e.target.onerror = null; // Prevent infinite loop
+                    }}
                   />
                   <div className="flex-1">
                     <h3 

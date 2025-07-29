@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { getProductById, addProduct, updateProduct, getCategories } from '../utils/localStorage';
 
 export default function AdminProductForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageType, setImageType] = useState('url'); // 'url' or 'upload'
   const [product, setProduct] = useState({
     name: '',
     description: '',
     price: '',
     image: '',
+    uploadedImage: null,
     category: '',
     rating: '',
     reviews: '',
@@ -47,6 +51,7 @@ export default function AdminProductForm() {
     if (productData) {
       setProduct({
         ...productData,
+        uploadedImage: null,
         features: productData.features || [''],
         specifications: productData.specifications || {
           'Print Type': '',
@@ -57,6 +62,12 @@ export default function AdminProductForm() {
           'Delivery': ''
         }
       });
+      
+      // Set image preview if URL exists
+      if (productData.image) {
+        setImagePreview(productData.image);
+        setImageType('url');
+      }
     }
   };
 
@@ -66,6 +77,57 @@ export default function AdminProductForm() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Update image preview when URL changes
+    if (name === 'image' && imageType === 'url') {
+      setImagePreview(value);
+    }
+  };
+
+  const handleImageTypeChange = (type) => {
+    setImageType(type);
+    if (type === 'url') {
+      setProduct(prev => ({ ...prev, uploadedImage: null }));
+      setImagePreview(product.image);
+    } else {
+      setProduct(prev => ({ ...prev, image: '' }));
+      setImagePreview(null);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+        setProduct(prev => ({
+          ...prev,
+          uploadedImage: file
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeUploadedImage = () => {
+    setImagePreview(null);
+    setProduct(prev => ({ ...prev, uploadedImage: null }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleFeatureChange = (index, value) => {
@@ -101,8 +163,18 @@ export default function AdminProductForm() {
     setLoading(true);
 
     try {
+      // Determine the final image source
+      let finalImage = '';
+      if (imageType === 'url' && product.image) {
+        finalImage = product.image;
+      } else if (imageType === 'upload' && product.uploadedImage) {
+        // For uploaded images, we'll use the data URL
+        finalImage = imagePreview;
+      }
+
       const productData = {
         ...product,
+        image: finalImage,
         price: parseFloat(product.price),
         rating: parseFloat(product.rating),
         reviews: parseInt(product.reviews),
@@ -111,6 +183,9 @@ export default function AdminProductForm() {
           Object.entries(product.specifications).filter(([_, value]) => value.trim() !== '')
         )
       };
+
+      // Remove uploadedImage from the data before saving
+      delete productData.uploadedImage;
 
       if (isEditing) {
         await updateProduct(parseInt(id), productData);
@@ -237,21 +312,6 @@ export default function AdminProductForm() {
                   placeholder="0"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Image URL *
-                </label>
-                <input
-                  type="url"
-                  name="image"
-                  value={product.image}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
             </div>
 
             <div className="mt-6">
@@ -281,6 +341,121 @@ export default function AdminProductForm() {
                 <span className="ml-2 text-sm text-gray-700">Product is in stock</span>
               </label>
             </div>
+          </div>
+
+          {/* Product Image */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Product Image</h2>
+            
+            {/* Image Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Image Source *
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="imageType"
+                    value="url"
+                    checked={imageType === 'url'}
+                    onChange={() => handleImageTypeChange('url')}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Image URL</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="imageType"
+                    value="upload"
+                    checked={imageType === 'upload'}
+                    onChange={() => handleImageTypeChange('upload')}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Upload Image</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Image URL Input */}
+            {imageType === 'url' && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image URL *
+                </label>
+                <input
+                  type="url"
+                  name="image"
+                  value={product.image}
+                  onChange={handleInputChange}
+                  required={imageType === 'url'}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            )}
+
+            {/* File Upload */}
+            {imageType === 'upload' && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Image *
+                </label>
+                <div className="flex items-center space-x-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    required={imageType === 'upload'}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <PhotoIcon className="w-5 h-5 mr-2 text-gray-500" />
+                    Choose Image
+                  </button>
+                  {product.uploadedImage && (
+                    <button
+                      type="button"
+                      onClick={removeUploadedImage}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {product.uploadedImage && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected: {product.uploadedImage.name}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image Preview
+                </label>
+                <div className="relative inline-block">
+                  <img
+                    src={imagePreview}
+                    alt="Product preview"
+                    className="w-48 h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      alert('Failed to load image. Please check the URL or try uploading a different image.');
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Features */}

@@ -99,6 +99,11 @@ export default function CardDetail() {
                 src={product.image} 
                 alt={product.name} 
                 className="w-full h-96 object-cover"
+                onError={(e) => {
+                  // Fallback to a placeholder image if the image fails to load
+                  e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Available";
+                  e.target.onerror = null; // Prevent infinite loop
+                }}
               />
             </div>
             
@@ -110,6 +115,11 @@ export default function CardDetail() {
                     src={product.image}
                     alt={`${product.name} view ${i}`}
                     className="w-full h-24 object-cover"
+                    onError={(e) => {
+                      // Fallback to a placeholder image if the image fails to load
+                      e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Available";
+                      e.target.onerror = null; // Prevent infinite loop
+                    }}
                   />
                 </div>
               ))}

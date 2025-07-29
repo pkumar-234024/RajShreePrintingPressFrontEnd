@@ -242,6 +242,11 @@ export default function AdminDashboard() {
                           className="h-10 w-10 rounded-lg object-cover"
                           src={product.image}
                           alt={product.name}
+                          onError={(e) => {
+                            // Fallback to a placeholder image if the image fails to load
+                            e.target.src = "https://via.placeholder.com/40x40?text=Image";
+                            e.target.onerror = null; // Prevent infinite loop
+                          }}
                         />
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{product.name}</div>
