@@ -18,7 +18,8 @@ const navigation = [
   { name: 'Products', href: '/products' },
   { name: 'About', href: '/about' },
   { name: 'Contact Us', href: '/contactus' },
-]
+  { name: 'Admin', href: '/admin/login' },
+];
 
 export default function HeroSection() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
