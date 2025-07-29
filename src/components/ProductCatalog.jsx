@@ -1,124 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, FunnelIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
-
-// Mock product data - replace with API call
-const products = [
-  {
-    id: 1,
-    name: "Wedding Invitation Cards",
-    description: "Elegant wedding invitation cards with custom designs",
-    price: 299,
-    image: "https://images.unsplash.com/photo-1518623489648-a173ef7824f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Invitations",
-    rating: 4.8,
-    reviews: 127,
-    inStock: true
-  },
-  {
-    id: 2,
-    name: "Business Cards",
-    description: "Professional business cards with premium quality",
-    price: 199,
-    image: "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Business",
-    rating: 4.9,
-    reviews: 89,
-    inStock: true
-  },
-  {
-    id: 3,
-    name: "Banner Printing",
-    description: "Large format banner printing for events and advertising",
-    price: 599,
-    image: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Banners",
-    rating: 4.7,
-    reviews: 56,
-    inStock: true
-  },
-  {
-    id: 4,
-    name: "Brochure Design & Print",
-    description: "Custom brochure design and high-quality printing",
-    price: 399,
-    image: "https://images.unsplash.com/photo-1518623489648-a173ef7824f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Marketing",
-    rating: 4.6,
-    reviews: 73,
-    inStock: true
-  },
-  {
-    id: 5,
-    name: "Poster Printing",
-    description: "Vibrant poster printing for events and promotions",
-    price: 149,
-    image: "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Posters",
-    rating: 4.5,
-    reviews: 42,
-    inStock: true
-  },
-  {
-    id: 6,
-    name: "Letterhead Design",
-    description: "Professional letterhead design and printing",
-    price: 249,
-    image: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Business",
-    rating: 4.8,
-    reviews: 31,
-    inStock: true
-  }
-];
-
-const categories = ["All", "Invitations", "Business", "Banners", "Marketing", "Posters"];
+import { getProducts, getCategories, searchProducts } from '../utils/localStorage';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProductCatalog() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [sortBy, setSortBy] = useState('name');
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { addToCart, getCartItemCount } = useCart();
+  const navigate = useNavigate();
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const loadData = () => {
+      try {
+        setLoading(true);
+        const productsData = getProducts();
+        const categoriesData = getCategories();
+        
+        setProducts(productsData);
+        setCategories(categoriesData);
+        setFilteredProducts(productsData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Filter and sort products when filters change
+  useEffect(() => {
+    const filtered = searchProducts(searchTerm, selectedCategory, priceRange);
     
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
+    // Sort the filtered products
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'rating':
-        return b.rating - a.rating;
-      case 'name':
-      default:
-        return a.name.localeCompare(b.name);
-    }
-  });
+    setFilteredProducts(sorted);
+  }, [searchTerm, selectedCategory, priceRange, sortBy, products]);
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (e, product) => {
+    e.stopPropagation(); // Prevent card click when clicking Add to Cart
     addToCart({
       ...product,
       quantity: 1
     });
   };
 
+  const handleProductClick = (productId) => {
+    navigate(`/card/${productId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        
+  
+
         {/* Search and Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-sm mb-8">
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             {/* Search */}
             <div className="flex-1 relative">
@@ -197,7 +168,7 @@ export default function ProductCatalog() {
         {/* Results Count */}
         <div className="flex justify-between items-center mb-6">
           <p className="text-gray-600">
-            Showing {sortedProducts.length} of {products.length} products
+            Showing {filteredProducts.length} of {products.length} products
           </p>
           <div className="flex items-center space-x-2">
             <ShoppingCartIcon className="w-6 h-6 text-blue-600" />
@@ -206,7 +177,7 @@ export default function ProductCatalog() {
         </div>
 
         {/* Products Grid */}
-        {sortedProducts.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No products found matching your criteria</p>
             <button
@@ -222,8 +193,12 @@ export default function ProductCatalog() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+            {filteredProducts.map((product) => (
+              <div 
+                key={product.id} 
+                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
+                onClick={() => handleProductClick(product.id)}
+              >
                 <div className="relative">
                   <img
                     src={product.image}
@@ -237,7 +212,7 @@ export default function ProductCatalog() {
                   )}
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+                  <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">{product.name}</h3>
                   <p className="text-gray-600 text-sm mb-3">{product.description}</p>
                   
                   <div className="flex items-center mb-3">
@@ -259,8 +234,8 @@ export default function ProductCatalog() {
 
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-blue-600">₹{product.price}</span>
-                    <button
-                      onClick={() => handleAddToCart(product)}
+                    <button 
+                      onClick={(e) => handleAddToCart(e, product)}
                       disabled={!product.inStock}
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >

@@ -5,9 +5,7 @@ function Card({ id, name, description, image }) {
   const navigate = useNavigate();
 
   const handleReadMore = () => {
-    navigate(`/card/${id}`, {
-      state: { id, name, desc: description, imageurl: image} // iconName is a string
-    });
+    navigate(`/card/${id}`);
   };
 
   return (

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, TrashIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline';
+import { addOrder } from '../utils/localStorage';
+import { useNavigate } from 'react-router-dom';
 
 export default function CartModal({ isOpen, onClose, cartItems, updateCart, removeFromCart }) {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -11,6 +13,7 @@ export default function CartModal({ isOpen, onClose, cartItems, updateCart, remo
     city: '',
     pincode: ''
   });
+  const navigate = useNavigate();
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -21,9 +24,15 @@ export default function CartModal({ isOpen, onClose, cartItems, updateCart, remo
     updateCart(itemId, newQuantity);
   };
 
+  const handleProductClick = (productId) => {
+    onClose(); // Close the cart modal
+    navigate(`/card/${productId}`); // Navigate to product detail
+  };
+
   const handleCheckout = (e) => {
     e.preventDefault();
-    // Here you would typically send order to your API
+    
+    // Create order object
     const order = {
       items: cartItems,
       total: calculateTotal(),
@@ -32,16 +41,32 @@ export default function CartModal({ isOpen, onClose, cartItems, updateCart, remo
       status: 'pending'
     };
     
-    // Save to localStorage for demo
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    orders.push(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
+    // Save order to localStorage using utility function
+    const savedOrder = addOrder(order);
     
-    // Clear cart
-    localStorage.removeItem('cart');
-    onClose();
-    setIsCheckoutOpen(false);
-    alert('Order placed successfully!');
+    if (savedOrder) {
+      // Clear cart
+      localStorage.removeItem('cart');
+      
+      // Reset form
+      setCustomerInfo({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        pincode: ''
+      });
+      
+      // Close modals
+      onClose();
+      setIsCheckoutOpen(false);
+      
+      // Show success message
+      alert('Order placed successfully! Order ID: ' + savedOrder.id);
+    } else {
+      alert('Error placing order. Please try again.');
+    }
   };
 
   if (!isOpen) return null;
@@ -76,10 +101,16 @@ export default function CartModal({ isOpen, onClose, cartItems, updateCart, remo
                   <img 
                     src={item.image} 
                     alt={item.name} 
-                    className="w-16 h-16 object-cover rounded"
+                    className="w-16 h-16 object-cover rounded cursor-pointer"
+                    onClick={() => handleProductClick(item.id)}
                   />
                   <div className="flex-1">
-                    <h3 className="font-semibold">{item.name}</h3>
+                    <h3 
+                      className="font-semibold cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => handleProductClick(item.id)}
+                    >
+                      {item.name}
+                    </h3>
                     <p className="text-gray-600 text-sm">{item.description}</p>
                     <p className="text-blue-600 font-semibold">₹{item.price}</p>
                   </div>
