@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "vite build && npm run build"
+    "deploy": "npm run build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",
