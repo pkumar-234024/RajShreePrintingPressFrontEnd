@@ -157,7 +157,7 @@ export default function CardDetail() {
               </div>
               
               {/* Quantity Selector */}
-              <div className="flex items-center mb-4">
+              {/* <div className="flex items-center mb-4">
                 <label className="mr-4 text-sm font-medium text-gray-700">Quantity:</label>
                 <div className="flex items-center border rounded-lg">
                   <button
@@ -174,16 +174,17 @@ export default function CardDetail() {
                     +
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Add to Cart Button */}
-              <button 
+              {/* // TODO */}
+              {/* <button 
                 onClick={handleAddToCart}
                 className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
               >
                 <ShoppingCartIcon className="w-5 h-5 mr-2" />
                 Add to Cart - ₹{product.price * quantity}
-              </button>
+              </button> */}
             </div>
 
             {/* Features */}

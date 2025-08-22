@@ -236,8 +236,9 @@ export default function ProductCatalog() {
                       {product.rating} ({product.reviews})
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between">
+                      {/* <TODO></TODO> */}
+                      {/* TODO */}
+                  {/* <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-blue-600">₹{product.price}</span>
                     <button 
                       onClick={(e) => handleAddToCart(e, product)}
@@ -246,7 +247,7 @@ export default function ProductCatalog() {
                     >
                       Add to Cart
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ))}
