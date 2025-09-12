@@ -8,7 +8,7 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline';
-import { productService } from '../../services/product.service';
+import { getProducts, deleteProduct, getCategories } from '../../utils/localStorage';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -23,16 +23,14 @@ export default function AdminProducts() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = () => {
     try {
       setLoading(true);
-      const productsData = await productService.getAllProducts();
-      
-      // Extract unique categories from products
-      const uniqueCategories = [...new Set(productsData.map(product => product.categoryId))];
+      const productsData = getProducts();
+      const categoriesData = getCategories();
       
       setProducts(productsData);
-      setCategories(uniqueCategories);
+      setCategories(categoriesData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -40,12 +38,16 @@ export default function AdminProducts() {
     }
   };
 
-  const handleDeleteProduct = async (productId) => {
+  const handleDeleteProduct = (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await productService.deleteProduct(productId);
-        await loadData(); // Reload products
-        alert('Product deleted successfully');
+        const success = deleteProduct(productId);
+        if (success) {
+          loadData(); // Reload products
+          alert('Product deleted successfully');
+        } else {
+          alert('Error deleting product');
+        }
       } catch (error) {
         console.error('Error deleting product:', error);
         alert('Error deleting product');

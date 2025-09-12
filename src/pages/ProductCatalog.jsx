@@ -1,16 +1,8 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, FunnelIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
+import { getProducts, getCategories, searchProducts } from '../utils/localStorage';
 import { useNavigate } from 'react-router-dom';
-import { 
-  fetchProducts, 
-  updateFilters, 
-  clearFilters,
-  selectFilteredProducts,
-  selectProductStatus,
-  selectFilters 
-} from '../store/productSlice';
 
 export default function ProductCatalog() {
   const [products, setProducts] = useState([]);
@@ -25,76 +17,19 @@ export default function ProductCatalog() {
   const { addToCart, getCartItemCount } = useCart();
   const navigate = useNavigate();
 
-  // Search and filter function
-  const searchProducts = (term, category, range) => {
-    return products.filter(product => {
-      const matchesSearch = product.ProductName.toLowerCase().includes(term.toLowerCase()) ||
-                          product.Description.toLowerCase().includes(term.toLowerCase());
-      const matchesCategory = category === 'All' || product.CategoryId === category;
-      const matchesPrice = product.Price >= range[0] && product.Price <= range[1];
-      
-      return matchesSearch && matchesCategory && matchesPrice;
-    });
-  };
-
-  // Load data from API on component mount
+  // Load data from localStorage on component mount
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       try {
         setLoading(true);
-        console.log('Starting to fetch products...');
-        const response = await productService.getAllProducts();
-        console.log('Raw API Response in Component:', response);
-        
-        // Handle potential response structures
-        let productsData;
-        if (Array.isArray(response)) {
-          console.log('Response is an array with length:', response.length);
-          productsData = response;
-        } else if (response && typeof response === 'object') {
-          console.log('Response is an object with keys:', Object.keys(response));
-          if (Array.isArray(response.data)) {
-            console.log('Response.data is an array with length:', response.data.length);
-            productsData = response.data;
-          } else if (Array.isArray(response.products)) {
-            console.log('Response.products is an array with length:', response.products.length);
-            productsData = response.products;
-          } else {
-            console.log('No valid array found in response');
-            productsData = [];
-          }
-        } else {
-          console.log('Response is neither array nor object:', typeof response);
-          productsData = [];
-        }
-        
-        if (productsData.length === 0) {
-          console.log('No products found in the response');
-        } else {
-          console.log('Sample product:', productsData[0]);
-        }
-        
-        console.log('Final processed products data:', productsData);
-        
-        if (productsData.length > 0) {
-          // Extract unique categories
-          const uniqueCategories = [...new Set(productsData.map(product => product.CategoryId))];
-          setCategories(['All', ...uniqueCategories]);
-          
-          // Set price range based on available products
-          const prices = productsData.map(p => p.Price);
-          setPriceRange([
-            Math.min(...prices),
-            Math.max(...prices)
-          ]);
-        }
+        const productsData = getProducts();
+        const categoriesData = getCategories();
         
         setProducts(productsData);
+        setCategories(categoriesData);
         setFilteredProducts(productsData);
       } catch (error) {
         console.error('Error loading data:', error);
-        setProducts([]);
-        setFilteredProducts([]);
       } finally {
         setLoading(false);
       }
@@ -111,14 +46,14 @@ export default function ProductCatalog() {
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
-          return a.Price - b.Price;
+          return a.price - b.price;
         case 'price-high':
-          return b.Price - a.Price;
+          return b.price - a.price;
         case 'rating':
-          return b.ProductRating - a.ProductRating;
+          return b.rating - a.rating;
         case 'name':
         default:
-          return a.ProductName.localeCompare(b.ProductName);
+          return a.name.localeCompare(b.name);
       }
     });
 
@@ -128,10 +63,7 @@ export default function ProductCatalog() {
   const handleAddToCart = (e, product) => {
     e.stopPropagation(); // Prevent card click when clicking Add to Cart
     addToCart({
-      id: product.Id,
-      name: product.ProductName,
-      price: product.Price,
-      image: product.ImageFile,
+      ...product,
       quantity: 1
     });
   };
@@ -261,25 +193,16 @@ export default function ProductCatalog() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {loading ? (
-          <div className="col-span-full text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading products...</p>
-          </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="col-span-full text-center py-8">
-            <p className="text-gray-600">No products found</p>
-          </div>
-        ) : filteredProducts.map((product) => (
+            {filteredProducts.map((product) => (
               <div 
-                key={product.Id} 
+                key={product.id} 
                 className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
-                onClick={() => handleProductClick(product.Id)}
+                onClick={() => handleProductClick(product.id)}
               >
                 <div className="relative">
                   <img
-                    src={product.ImageFile}
-                    alt={product.ProductName}
+                    src={product.image}
+                    alt={product.name}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
                       // Fallback to a placeholder image if the image fails to load
@@ -287,22 +210,22 @@ export default function ProductCatalog() {
                       e.target.onerror = null; // Prevent infinite loop
                     }}
                   />
-                  {!product.InStock && (
+                  {!product.inStock && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
                       Out of Stock
                     </div>
                   )}
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">{product.ProductName}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{product.Description}</p>
+                  <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">{product.name}</h3>
+                  <p className="text-gray-600 text-sm mb-3">{product.description}</p>
                   
                   <div className="flex items-center mb-3">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
                         <svg
                           key={i}
-                          className={`w-4 h-4 ${i < Math.floor(product.ProductRating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                          className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
                           viewBox="0 0 20 20"
                         >
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -310,21 +233,21 @@ export default function ProductCatalog() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {product.ProductRating} ({product.NumberOfReviews})
+                      {product.rating} ({product.reviews})
                     </span>
                   </div>
                       {/* <TODO></TODO> */}
                       {/* TODO */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-blue-600">₹{product.Price}</span>
+                  {/* <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-blue-600">₹{product.price}</span>
                     <button 
                       onClick={(e) => handleAddToCart(e, product)}
-                      disabled={!product.InStock}
+                      disabled={!product.inStock}
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       Add to Cart
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ))}

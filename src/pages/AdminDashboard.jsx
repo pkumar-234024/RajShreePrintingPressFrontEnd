@@ -11,7 +11,7 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import { productService } from '../services/product.service';
+import { getProducts, getOrders, getCategories } from '../utils/localStorage';
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
@@ -29,22 +29,19 @@ export default function AdminDashboard() {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = () => {
     try {
       setLoading(true);
-      const productsData = await productService.getAllProducts();
-      // For now, we'll use an empty array for orders until we have the orders API
-      const ordersData = [];
+      const productsData = getProducts();
+      const ordersData = getOrders();
       
-      console.log('Dashboard Products Data:', productsData); // Debug log
-      
-      setProducts(Array.isArray(productsData) ? productsData : []);
+      setProducts(productsData);
       setOrders(ordersData);
 
       // Calculate statistics
       const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0);
-      const averageRating = productsData && productsData.length > 0 
-        ? productsData.reduce((sum, product) => sum + (product.ProductRating || 0), 0) / productsData.length 
+      const averageRating = productsData.length > 0 
+        ? productsData.reduce((sum, product) => sum + product.rating, 0) / productsData.length 
         : 0;
 
       setStats({

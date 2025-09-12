@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
-import { productService } from '../../services/product.service';
+import { getProductById, addProduct, updateProduct, getCategories } from '../../utils/localStorage';
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -41,51 +41,33 @@ export default function AdminProductForm() {
     }
   }, [id]);
 
-  const loadCategories = async () => {
-    try {
-      const productsData = await productService.getAllProducts();
-      // Extract unique categories from products
-      const uniqueCategories = [...new Set(productsData.map(product => product.categoryId))];
-      setCategories(uniqueCategories.filter(cat => cat !== 'All'));
-    } catch (error) {
-      console.error('Error loading categories:', error);
-    }
+  const loadCategories = () => {
+    const categoriesData = getCategories();
+    setCategories(categoriesData.filter(cat => cat !== 'All'));
   };
 
-  const loadProduct = async () => {
-    try {
-      const productData = await productService.getProductById(parseInt(id));
-      if (productData) {
-        setProduct({
-          name: productData.ProductName,
-          description: productData.Description,
-          price: productData.Price,
-          image: '', // Will be handled by the API
-          uploadedImage: null,
-          category: productData.CategoryId,
-          rating: productData.ProductRating,
-          reviews: productData.NumberOfReviews,
-          inStock: productData.InStock,
-          features: productData.ProductFeatures ? productData.ProductFeatures.split(',') : [''],
-          specifications: {
-            'Print Type': productData.PrintType || '',
-            'Paper Quality': productData.PaperQuality || '',
-            'Turnaround Time': productData.TurnaroudnTime || '',
-            'Minimum Order': productData.MinimumOrderQuantity || '',
-            'Design Support': productData.DesignSupport || '',
-            'Delivery': productData.Delivery || ''
-          }
-        });
-        
-        // Set image preview if URL exists
-        if (productData.ImageFile) {
-          setImagePreview(productData.ImageFile);
-          setImageType('url');
+  const loadProduct = () => {
+    const productData = getProductById(parseInt(id));
+    if (productData) {
+      setProduct({
+        ...productData,
+        uploadedImage: null,
+        features: productData.features || [''],
+        specifications: productData.specifications || {
+          'Print Type': '',
+          'Paper Quality': '',
+          'Turnaround Time': '',
+          'Minimum Order': '',
+          'Design Support': '',
+          'Delivery': ''
         }
+      });
+      
+      // Set image preview if URL exists
+      if (productData.image) {
+        setImagePreview(productData.image);
+        setImageType('url');
       }
-    } catch (error) {
-      console.error('Error loading product:', error);
-      alert('Error loading product details');
     }
   };
 
