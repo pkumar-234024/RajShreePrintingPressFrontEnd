@@ -1,11 +1,33 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+import { Product } from '../models/Product';
+
 // Create async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async () => {
-    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/list`);
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/list`);
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
+      // Transform the API response to plain objects
+      const products = Product.fromAPIList(response.data);
+      return products;
+    } catch (error) {
+      alert('Error in fetchProducts thunk:', error);
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// Create async thunk for fetching a single product by ID
+export const fetchProductById = createAsyncThunk(
+  'products/fetchProductById',
+  async (id) => {
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/get?Id=${id}`);
     return response.data;
   }
 );
@@ -13,8 +35,11 @@ export const fetchProducts = createAsyncThunk(
 
 const initialState = {
   products: [],
+  currentProduct: null,
   status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  singleProductStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
   error: null,
+  singleProductError: null,
   isSuccess: false,
   successMessage: '',
   errors: [],
@@ -32,15 +57,27 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.products = action.payload.value;
-        state.isSuccess = action.payload.isSuccess;
-        state.successMessage = action.payload.successMessage;
-        state.errors = action.payload.errors;
-        state.validationErrors = action.payload.validationErrors;
+        state.products = action.payload;
+        state.isSuccess = true;
+        state.successMessage = '';
+        state.errors = [];
+        state.validationErrors = [];
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
+      })
+      .addCase(fetchProductById.pending, (state) => {
+        state.singleProductStatus = 'loading';
+        state.currentProduct = null;
+      })
+      .addCase(fetchProductById.fulfilled, (state, action) => {
+        state.singleProductStatus = 'succeeded';
+        state.currentProduct = action.payload.value;
+      })
+      .addCase(fetchProductById.rejected, (state, action) => {
+        state.singleProductStatus = 'failed';
+        state.singleProductError = action.error.message;
       });
   }
 });
@@ -50,5 +87,8 @@ export const selectAllProducts = (state) => state.products.products;
 export const selectProductsStatus = (state) => state.products.status;
 export const selectProductsError = (state) => state.products.error;
 export const selectIsSuccess = (state) => state.products.isSuccess;
+export const selectCurrentProduct = (state) => state.products.currentProduct;
+export const selectSingleProductStatus = (state) => state.products.singleProductStatus;
+export const selectSingleProductError = (state) => state.products.singleProductError;
 
 export default productSlice.reducer;

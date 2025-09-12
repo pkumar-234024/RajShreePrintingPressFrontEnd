@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 import { 
   ArrowLeftIcon, 
   PlusIcon, 
@@ -8,62 +10,65 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline';
-import { getProducts, deleteProduct, getCategories } from '../../utils/localStorage';
+import { fetchProducts, selectAllProducts, selectProductsStatus } from '../../redux/productSlice';
+import { getCategories } from '../../utils/localStorage';
+import { Alert } from '@material-tailwind/react';
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const products = useSelector(selectAllProducts);
+  const productsStatus = useSelector(selectProductsStatus);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [dispatch]);
 
-  const loadData = () => {
+  // Add a debug effect to log products state
+  useEffect(() => {
+  }, [products, productsStatus]);
+
+  const loadData = async () => {
     try {
-      setLoading(true);
-      const productsData = getProducts();
-      const categoriesData = getCategories();
-      
-      setProducts(productsData);
+      // Log the API response directly
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/list`);      
+      dispatch(fetchProducts());
+      const categoriesData = getCategories() || [];
       setCategories(categoriesData);
     } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
+      Alert('Error loading data:', error);
     }
   };
 
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        const success = deleteProduct(productId);
-        if (success) {
-          loadData(); // Reload products
-          alert('Product deleted successfully');
-        } else {
-          alert('Error deleting product');
-        }
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/product/delete?Id=${productId}`);
+        dispatch(fetchProducts()); // Reload products after deletion
+        alert('Product deleted successfully');
       } catch (error) {
-        console.error('Error deleting product:', error);
-        alert('Error deleting product');
+        alert('Error deleting product: ' + (error.response?.data?.message || error.message));
       }
     }
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredProducts = Array.isArray(products) ? products.filter(product => {    
+    if (!product?.productName || !product?.description) {
+      return false;
+    }    
+    const matchesSearch = product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || product.categoryId.toString() === selectedCategory;
     
     return matchesSearch && matchesCategory;
-  });
-
-  if (loading) {
+  }) : [];
+console.log(filteredProducts);
+  if (productsStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -186,15 +191,15 @@ export default function AdminProducts() {
                         <div className="flex items-center">
                           <img
                             className="h-12 w-12 rounded-lg object-cover"
-                            src={product.image}
-                            alt={product.name}
+                            src={product.imageName}
+                            alt={product.productName}
                             onError={(e) => {
                               e.target.src = "https://via.placeholder.com/48x48?text=Image";
                               e.target.onerror = null;
                             }}
                           />
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm font-medium text-gray-900">{product.productName}</div>
                             <div className="text-sm text-gray-500">{product.description.substring(0, 50)}...</div>
                           </div>
                         </div>
@@ -209,9 +214,9 @@ export default function AdminProducts() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <span className="text-sm text-gray-900">{product.rating}</span>
+                          <span className="text-sm text-gray-900">{product.productRating}</span>
                           <span className="text-yellow-400 ml-1">★</span>
-                          <span className="text-sm text-gray-500 ml-1">({product.reviews})</span>
+                          <span className="text-sm text-gray-500 ml-1">({product.numberOfReviews})</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

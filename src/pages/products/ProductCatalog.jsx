@@ -44,9 +44,8 @@ export default function ProductCatalog() {
   // Update products state when Redux data changes
   useEffect(() => {
     if (productsData && Array.isArray(productsData)) {
-      const products = productsData.map(item => new Product(item));
-      setProducts(products);
-      setFilteredProducts(products);
+      setProducts(productsData);
+      setFilteredProducts(productsData);
     }
   }, [productsData]);
 
@@ -233,10 +232,13 @@ export default function ProductCatalog() {
               >
                 <div className="relative">
                   <img
-                    src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
+                    src={product.imageName ? `${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}` : "https://via.placeholder.com/300x200"}
                     alt={product.productName}
                     className="w-full h-48 object-cover"
-                    
+                    onError={(e) => {
+                      e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                      e.target.onerror = null;
+                    }}
                   />
                   {!product.inStock && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
@@ -250,7 +252,7 @@ export default function ProductCatalog() {
                   
                   <div className="flex items-center mb-3">
                     <div className="flex items-center">
-                      {filteredProducts.map((_, i) => (
+                      {[...Array(5)].map((_, i) => (
                         <svg
                           key={i}
                           className={`w-4 h-4 ${i < Math.floor(product.productRating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
@@ -261,13 +263,12 @@ export default function ProductCatalog() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {product.productRating} ({product.numberOfReviews})
+                      {product.productRating.toFixed(1)} ({product.numberOfReviews})
                     </span>
                   </div>
-                      {/* <TODO></TODO> */}
-                      {/* TODO */}
-                  {/* <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-blue-600">₹{product.price}</span>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-blue-600">₹{product.price.toFixed(2)}</span>
                     <button 
                       onClick={(e) => handleAddToCart(e, product)}
                       disabled={!product.inStock}
@@ -275,7 +276,7 @@ export default function ProductCatalog() {
                     >
                       Add to Cart
                     </button>
-                  </div> */}
+                  </div>
                 </div>
               </div>
             ))}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 import { 
   ChartBarIcon, 
   CubeIcon, 
@@ -11,10 +13,10 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import { getProducts, getOrders, getCategories } from '../../utils/localStorage';
+import { fetchProducts, selectAllProducts, selectProductsStatus } from '../../redux/productSlice';
+import { getOrders, getCategories } from '../../utils/localStorage';
 
 export default function AdminDashboard() {
-  const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -22,39 +24,45 @@ export default function AdminDashboard() {
     totalRevenue: 0,
     averageRating: 0
   });
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const products = useSelector(selectAllProducts);
+  const productsStatus = useSelector(selectProductsStatus);
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [dispatch]);
 
-  const loadDashboardData = () => {
+  useEffect(() => {
+    if (products && orders) {
+      updateStats();
+    }
+  }, [products, orders]);
+
+  const loadDashboardData = async () => {
     try {
-      setLoading(true);
-      const productsData = getProducts();
+      dispatch(fetchProducts());
       const ordersData = getOrders();
-      
-      setProducts(productsData);
       setOrders(ordersData);
-
-      // Calculate statistics
-      const totalRevenue = ordersData.reduce((sum, order) => sum + order.total, 0);
-      const averageRating = productsData.length > 0 
-        ? productsData.reduce((sum, product) => sum + product.rating, 0) / productsData.length 
-        : 0;
-
-      setStats({
-        totalProducts: productsData.length,
-        totalOrders: ordersData.length,
-        totalRevenue: totalRevenue,
-        averageRating: averageRating.toFixed(1)
-      });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const updateStats = () => {
+    if (!Array.isArray(orders) || !Array.isArray(products)) return;
+
+    const totalRevenue = orders.reduce((sum, order) => sum + (order?.total || 0), 0);
+    const averageRating = products.length > 0 
+      ? products.reduce((sum, product) => sum + (product?.rating || 0), 0) / products.length 
+      : 0;
+
+    setStats({
+      totalProducts: products?.length || 0,
+      totalOrders: orders?.length || 0,
+      totalRevenue: totalRevenue,
+      averageRating: averageRating.toFixed(1)
+    });
   };
 
   const handleLogout = () => {
@@ -71,16 +79,19 @@ export default function AdminDashboard() {
     navigate(`/admin/products/edit/${productId}`);
   };
 
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      // This will be implemented in the utils
-      const updatedProducts = products.filter(p => p.id !== productId);
-      localStorage.setItem('products', JSON.stringify(updatedProducts));
-      loadDashboardData(); // Reload data
+      try {
+        // You'll need to implement the delete API call here
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/product/delete?Id=${productId}`);
+        dispatch(fetchProducts()); // Reload products after deletion
+      } catch (error) {
+        console.error('Error deleting product:', error);
+      }
     }
   };
 
-  if (loading) {
+  if (productsStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -234,13 +245,13 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {products.slice(0, 5).map((product) => (
+                {products.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <img
                           className="h-10 w-10 rounded-lg object-cover"
-                          src={product.image}
+                          src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
                           alt={product.name}
                           onError={(e) => {
                             // Fallback to a placeholder image if the image fails to load
