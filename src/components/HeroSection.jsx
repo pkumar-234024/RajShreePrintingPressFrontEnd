@@ -62,7 +62,7 @@ export default function HeroSection() {
               </Link>
             ))}
           </div>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+          {/* <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
             <button
               onClick={() => setCartModalOpen(true)}
               className="relative flex items-center text-sm/6 font-semibold text-gray-900 hover:text-blue-600"
@@ -75,7 +75,7 @@ export default function HeroSection() {
                 </span>
               )}
             </button>
-          </div>
+          </div> */}
         </nav>
         <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
           <div className="fixed inset-0 z-50" />
@@ -112,7 +112,7 @@ export default function HeroSection() {
                     </Link>
                   ))}
                 </div>
-                <div className="py-6">
+                {/* <div className="py-6">
                   <button
                     onClick={() => {
                       setCartModalOpen(true)
@@ -123,7 +123,7 @@ export default function HeroSection() {
                     <ShoppingCartIcon className="w-5 h-5 mr-2" />
                     Cart ({getCartItemCount()})
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </DialogPanel>

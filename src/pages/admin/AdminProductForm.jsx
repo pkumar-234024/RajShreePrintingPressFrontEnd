@@ -1,26 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
-import { getProductById, addProduct, updateProduct, getCategories } from '../../utils/localStorage';
+import { createProduct } from '../../redux/productSlice';
+import { getProductById, updateProduct, getCategories } from '../../utils/localStorage';
 
 export default function AdminProductForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageType, setImageType] = useState('url'); // 'url' or 'upload'
   const [product, setProduct] = useState({
-    name: '',
+    productName: '',
     description: '',
+    delivery:'',
+    paperQuality:'',
+    designSupport:'',
+    turnaroudnTime:0,
+    minimumOrderQuantity:0,
+    printType:'',
     price: '',
     image: '',
+    imageFile : null,
     uploadedImage: null,
     category: '',
-    rating: '',
-    reviews: '',
+    categoryId:1,
+    productRating: '',
+    numberOfReviews: '',
     inStock: true,
+    productFeatures: [],
     features: [''],
     specifications: {
       'Print Type': '',
@@ -158,7 +170,7 @@ export default function AdminProductForm() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -175,22 +187,36 @@ export default function AdminProductForm() {
       const productData = {
         ...product,
         image: finalImage,
+        imageFile: product.uploadedImage,
+        categoryId:1,
         price: parseFloat(product.price),
-        rating: parseFloat(product.rating),
-        reviews: parseInt(product.reviews),
+        productRating: parseInt(product.productRating),
+        numberOfReviews: parseInt(product.numberOfReviews),
         features: product.features.filter(f => f.trim() !== ''),
+        productFeatures: product.features.filter(f => f.trim() !== ''),
+        printType:product.specifications['Print Type'],
+        paperQuality:product.specifications['Paper Quality'],
+        turnaroudnTime:parseInt(product.specifications['Turnaround Time']) || 0,
+        minimumOrderQuantity:parseInt(product.specifications['Minimum Order']) || 0,
+        designSupport:product.specifications['Design Support'],
+        delivery:product.specifications['Delivery'],
         specifications: Object.fromEntries(
           Object.entries(product.specifications).filter(([_, value]) => value.trim() !== '')
         )
       };
-
+      debugger;
       // Remove uploadedImage from the data before saving
       delete productData.uploadedImage;
 
       if (isEditing) {
         await updateProduct(parseInt(id), productData);
       } else {
-        await addProduct(productData);
+        const result = await dispatch(createProduct(productData)).unwrap();
+        if (result.isSuccess) {
+          navigate('/admin/dashboard');
+        } else {
+          alert('Error creating product: ' + (result.errors?.join(', ') || 'Unknown error'));
+        }
       }
 
       navigate('/admin/dashboard');
@@ -236,8 +262,8 @@ export default function AdminProductForm() {
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={product.name}
+                  name="productName"
+                  value={product.productName}
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -286,8 +312,8 @@ export default function AdminProductForm() {
                 </label>
                 <input
                   type="number"
-                  name="rating"
-                  value={product.rating}
+                  name="productRating"
+                  value={product.productRating}
                   onChange={handleInputChange}
                   required
                   min="0"
@@ -304,8 +330,8 @@ export default function AdminProductForm() {
                 </label>
                 <input
                   type="number"
-                  name="reviews"
-                  value={product.reviews}
+                  name="numberOfReviews"
+                  value={product.numberOfReviews}
                   onChange={handleInputChange}
                   min="0"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

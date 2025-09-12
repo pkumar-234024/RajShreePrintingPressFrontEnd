@@ -196,7 +196,8 @@ export default function ProductCatalog() {
           )}
         </div>
 
-        {/* Results Count */}
+         {/* To do     */}
+        {/* Results Count
         <div className="flex justify-between items-center mb-6">
           <p className="text-gray-600">
             Showing {filteredProducts.length} of {products.length} products
@@ -205,7 +206,7 @@ export default function ProductCatalog() {
             <ShoppingCartIcon className="w-6 h-6 text-blue-600" />
             <span className="text-sm font-medium">{getCartItemCount()} items in cart</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
@@ -267,7 +268,7 @@ export default function ProductCatalog() {
                     </span>
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-blue-600">₹{product.price.toFixed(2)}</span>
                     <button 
                       onClick={(e) => handleAddToCart(e, product)}
@@ -276,7 +277,7 @@ export default function ProductCatalog() {
                     >
                       Add to Cart
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ))}

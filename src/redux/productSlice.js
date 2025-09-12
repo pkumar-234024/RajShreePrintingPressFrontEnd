@@ -1,7 +1,31 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
 import { Product } from '../models/Product';
+
+// Create axios instance with custom config
+const axiosInstance = axios.create({
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Accept any status code less than 500
+  }
+});
+
+// Create async thunk for creating a product
+export const createProduct = createAsyncThunk(
+  'products/createProduct',
+  async (formData) => {
+    try {
+      debugger;
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/product/create`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  }
+);
 
 // Create async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
@@ -78,6 +102,26 @@ const productSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.singleProductStatus = 'failed';
         state.singleProductError = action.error.message;
+      })
+      .addCase(createProduct.pending, (state) => {
+        state.status = 'loading';
+        state.isSuccess = false;
+        state.successMessage = '';
+        state.errors = [];
+        state.validationErrors = [];
+      })
+      .addCase(createProduct.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.products.push(action.payload.value);
+        state.isSuccess = action.payload.isSuccess;
+        state.successMessage = action.payload.successMessage;
+        state.errors = action.payload.errors;
+        state.validationErrors = action.payload.validationErrors;
+      })
+      .addCase(createProduct.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+        state.isSuccess = false;
       });
   }
 });
