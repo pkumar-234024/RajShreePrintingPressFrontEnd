@@ -1,33 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, Link, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, StarIcon, CheckIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
-import { getProductById } from '../utils/localStorage';
 import { useCart } from '../context/CartContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProductById, selectCurrentProduct, selectSingleProductStatus, selectSingleProductError } from '../redux/productSlice';
 
 export default function CardDetail() {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const { addToCart, getCartItemCount } = useCart();
+  const dispatch = useDispatch();
+  const product = useSelector(selectCurrentProduct);
+  const status = useSelector(selectSingleProductStatus);
+  const error = useSelector(selectSingleProductError);
 
   useEffect(() => {
-    const loadProduct = () => {
-      try {
-        setLoading(true);
-        const productData = getProductById(parseInt(id));
-        setProduct(productData);
-      } catch (error) {
-        console.error('Error loading product:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
-      loadProduct();
+      dispatch(fetchProductById(parseInt(id)));
     }
-  }, [id]);
+  }, [dispatch, id]);
 
   const handleAddToCart = () => {
     if (product) {
@@ -46,7 +37,7 @@ export default function CardDetail() {
     }
   };
 
-  if (loading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -96,8 +87,8 @@ export default function CardDetail() {
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <img 
-                src={product.image} 
-                alt={product.name} 
+                src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
+                alt={product.productName} 
                 className="w-full h-96 object-cover"
                 onError={(e) => {
                   // Fallback to a placeholder image if the image fails to load
@@ -130,18 +121,18 @@ export default function CardDetail() {
           <div className="space-y-6">
             {/* Title and Rating */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.productName}</h1>
               <div className="flex items-center mb-4">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
                     <StarIcon 
                       key={i} 
-                      className={`w-5 h-5 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                      className={`w-5 h-5 ${i < Math.floor(product.productRating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                     />
                   ))}
                 </div>
                 <span className="ml-2 text-sm text-gray-600">
-                  {product.rating} ({product.reviews} reviews)
+                  {product.productRating} ({product.numberOfReviews} reviews)
                 </span>
               </div>
               <p className="text-gray-600 text-lg leading-relaxed">{product.description}</p>
@@ -188,11 +179,11 @@ export default function CardDetail() {
             </div>
 
             {/* Features */}
-            {product.features && (
+            {product.productFeatures && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-xl font-semibold mb-4">Key Features</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {product.features.map((feature, index) => (
+                  {product.productFeatures[0].split(',').map((feature, index) => (
                     <div key={index} className="flex items-center">
                       <CheckIcon className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
                       <span className="text-gray-700">{feature}</span>
@@ -203,19 +194,24 @@ export default function CardDetail() {
             )}
 
             {/* Specifications */}
-            {product.specifications && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-semibold mb-4">Specifications</h3>
-                <div className="space-y-3">
-                  {Object.entries(product.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
-                      <span className="font-medium text-gray-700">{key}</span>
-                      <span className="text-gray-600">{value}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-xl font-semibold mb-4">Specifications</h3>
+              <div className="space-y-3">
+                {[
+                  ['Print Type', product.printType],
+                  ['Paper Quality', product.paperQuality],
+                  ['Turnaround Time', `${product.turnaroudnTime} days`],
+                  ['Minimum Order', `${product.minimumOrderQuantity} pieces`],
+                  ['Design Support', product.designSupport],
+                  ['Delivery', product.delivery]
+                ].map(([key, value]) => (
+                  <div key={key} className="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
+                    <span className="font-medium text-gray-700">{key}</span>
+                    <span className="text-gray-600">{value}</span>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
