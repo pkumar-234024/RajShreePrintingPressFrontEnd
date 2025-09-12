@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, FunnelIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../../context/CartContext';
-import { getProducts, getCategories, searchProducts } from '../../utils/localStorage';
+import { getCategories, searchProducts } from '../../utils/localStorage';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts, selectAllProducts, selectProductsStatus, selectProductsError } from '../../redux/productSlice';
+import { Product } from '../../models/Product';
 
 export default function ProductCatalog() {
   const [products, setProducts] = useState([]);
@@ -17,30 +20,48 @@ export default function ProductCatalog() {
   const { addToCart, getCartItemCount } = useCart();
   const navigate = useNavigate();
 
-  // Load data from localStorage on component mount
+  const dispatch = useDispatch();
+  const productsData = useSelector(selectAllProducts);
+  const productsStatus = useSelector(selectProductsStatus);
+  const productsError = useSelector(selectProductsError);
+
+  // Load data when component mounts
   useEffect(() => {
-    const loadData = () => {
+    if (productsStatus === 'idle') {
+      dispatch(fetchProducts());
+    }
+    const loadCategories = () => {
       try {
-        setLoading(true);
-        const productsData = getProducts();
         const categoriesData = getCategories();
-        
-        setProducts(productsData);
         setCategories(categoriesData);
-        setFilteredProducts(productsData);
       } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error loading categories:', error);
       }
     };
+    loadCategories();
+  }, [dispatch, productsStatus]);
 
-    loadData();
-  }, []);
+  // Update products state when Redux data changes
+  useEffect(() => {
+    if (productsData && Array.isArray(productsData)) {
+      const products = productsData.map(item => new Product(item));
+      setProducts(products);
+      setFilteredProducts(products);
+    }
+  }, [productsData]);
 
   // Filter and sort products when filters change
   useEffect(() => {
-    const filtered = searchProducts(searchTerm, selectedCategory, priceRange);
+    // Filter products directly from mapped products data
+    const filtered = products.filter(product => {
+      const matchesSearch = 
+        (product.productName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (product.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      const matchesCategory = selectedCategory === 'All' || product.categoryId.toString() === selectedCategory;
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      
+      return matchesSearch && matchesCategory && matchesPrice;
+    });
     
     // Sort the filtered products
     const sorted = [...filtered].sort((a, b) => {
@@ -50,10 +71,10 @@ export default function ProductCatalog() {
         case 'price-high':
           return b.price - a.price;
         case 'rating':
-          return b.rating - a.rating;
+          return b.productRating - a.productRating;
         case 'name':
         default:
-          return a.name.localeCompare(b.name);
+          return a.productName.localeCompare(b.productName);
       }
     });
 
@@ -72,12 +93,23 @@ export default function ProductCatalog() {
     navigate(`/card/${productId}`);
   };
 
-  if (loading) {
+  if (productsStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (productsStatus === 'failed') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">❌</div>
+          <p className="text-gray-600">Error loading products: {productsError}</p>
         </div>
       </div>
     );
@@ -201,14 +233,10 @@ export default function ProductCatalog() {
               >
                 <div className="relative">
                   <img
-                    src={product.image}
-                    alt={product.name}
+                    src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
+                    alt={product.productName}
                     className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      // Fallback to a placeholder image if the image fails to load
-                      e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
-                      e.target.onerror = null; // Prevent infinite loop
-                    }}
+                    
                   />
                   {!product.inStock && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs">
@@ -217,15 +245,15 @@ export default function ProductCatalog() {
                   )}
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">{product.name}</h3>
+                  <h3 className="text-lg font-semibold mb-2 hover:text-blue-600 transition-colors">{product.productName}</h3>
                   <p className="text-gray-600 text-sm mb-3">{product.description}</p>
                   
                   <div className="flex items-center mb-3">
                     <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
+                      {filteredProducts.map((_, i) => (
                         <svg
                           key={i}
-                          className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                          className={`w-4 h-4 ${i < Math.floor(product.productRating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
                           viewBox="0 0 20 20"
                         >
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -233,7 +261,7 @@ export default function ProductCatalog() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {product.rating} ({product.reviews})
+                      {product.productRating} ({product.numberOfReviews})
                     </span>
                   </div>
                       {/* <TODO></TODO> */}

@@ -10,6 +10,7 @@ export const fetchProducts = createAsyncThunk(
   }
 );
 
+
 const initialState = {
   products: [],
   status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
