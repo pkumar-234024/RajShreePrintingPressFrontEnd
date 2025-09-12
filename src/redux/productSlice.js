@@ -32,6 +32,15 @@ export const fetchProductById = createAsyncThunk(
   }
 );
 
+// Create async thunk for fetching a single product by ID
+export const fetchProductById = createAsyncThunk(
+  'products/fetchProductById',
+  async (id) => {
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/get?Id=${id}`);
+    return response.data;
+  }
+);
+
 
 const initialState = {
   products: [],
