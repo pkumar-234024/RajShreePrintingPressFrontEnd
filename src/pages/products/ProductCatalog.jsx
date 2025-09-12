@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, FunnelIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
-import { useCart } from '../context/CartContext';
-import { getProducts, getCategories, searchProducts } from '../utils/localStorage';
+import { useCart } from '../../context/CartContext';
+import { getProducts, getCategories, searchProducts } from '../../utils/localStorage';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProductCatalog() {

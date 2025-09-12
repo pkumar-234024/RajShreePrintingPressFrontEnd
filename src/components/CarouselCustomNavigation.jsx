@@ -1,5 +1,4 @@
 import { Carousel } from "@material-tailwind/react";
- 
 export function CarouselCustomNavigation() {
   return (
     <Carousel transition={{ duration: 2 }} className="rounded-xl">

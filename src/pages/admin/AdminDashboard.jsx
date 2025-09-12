@@ -11,7 +11,7 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import { getProducts, getOrders, getCategories } from '../utils/localStorage';
+import { getProducts, getOrders, getCategories } from '../../utils/localStorage';
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
