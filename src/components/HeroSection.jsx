@@ -18,7 +18,7 @@ const navigation = [
   { name: 'Products', href: '/products' },
   { name: 'About', href: '/about' },
   { name: 'Contact Us', href: '/contactus' },
-  { name: 'Admin', href: '/admin/login' },
+  //{ name: 'Admin', href: '/admin/login' },
 ];
 
 export default function HeroSection() {

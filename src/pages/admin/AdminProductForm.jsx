@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
-import { createProduct } from '../../redux/productSlice';
-import { getProductById, updateProduct, getCategories } from '../../utils/localStorage';
+import { getProductById, getCategories } from '../../utils/localStorage';
+import { 
+  createProduct, 
+ updateProduct,
+  fetchProductById, 
+  selectCurrentProduct 
+} from '../../redux/productSlice';
 
 export default function AdminProductForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const reduxProduct = useSelector(selectCurrentProduct);
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -49,39 +55,46 @@ export default function AdminProductForm() {
   useEffect(() => {
     loadCategories();
     if (isEditing) {
-      loadProduct();
+      //loadProduct();
+      dispatch(fetchProductById(parseInt(id)));
     }
-  }, [id]);
+  }, [dispatch,id,isEditing]);
 
   const loadCategories = () => {
     const categoriesData = getCategories();
     setCategories(categoriesData.filter(cat => cat !== 'All'));
   };
 
-  const loadProduct = () => {
-    const productData = getProductById(parseInt(id));
-    if (productData) {
-      setProduct({
-        ...productData,
-        uploadedImage: null,
-        features: productData.features || [''],
-        specifications: productData.specifications || {
-          'Print Type': '',
-          'Paper Quality': '',
-          'Turnaround Time': '',
-          'Minimum Order': '',
-          'Design Support': '',
-          'Delivery': ''
-        }
-      });
-      
-      // Set image preview if URL exists
-      if (productData.image) {
-        setImagePreview(productData.image);
-        setImageType('url');
+  useEffect(() => {
+  if (reduxProduct && isEditing) {
+    setProduct({
+      ...reduxProduct,
+      uploadedImage: null,
+      productFeatures: (() => {
+  if (Array.isArray(reduxProduct.productFeatures)) {
+    return reduxProduct.productFeatures;
+  }
+  if (typeof reduxProduct.productFeatures === "string") {
+    return reduxProduct.productFeatures[0].split(",").map(f => f.trim());
+  }
+  return [""];
+})(),
+      specifications: {
+        'Print Type': reduxProduct.printType || '',
+        'Paper Quality': reduxProduct.paperQuality || '',
+        'Turnaround Time': reduxProduct.turnaroudnTime || '',
+        'Minimum Order': reduxProduct.minimumOrderQuantity || '',
+        'Design Support': reduxProduct.designSupport || '',
+        'Delivery': reduxProduct.delivery || ''
       }
+    });
+
+    if (reduxProduct.image) {
+      setImagePreview(reduxProduct.image);
+      setImageType('url');
     }
-  };
+  }
+}, [reduxProduct, isEditing]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -143,21 +156,21 @@ export default function AdminProductForm() {
   };
 
   const handleFeatureChange = (index, value) => {
-    const newFeatures = [...product.features];
+    const newFeatures = [...product.productFeatures];
     newFeatures[index] = value;
-    setProduct(prev => ({ ...prev, features: newFeatures }));
+    setProduct(prev => ({ ...prev, productFeatures: newFeatures }));
   };
 
-  const addFeature = () => {
+  const addFeature = () => { 
     setProduct(prev => ({
       ...prev,
-      features: [...prev.features, '']
+      productFeatures: [...prev.productFeatures, '']
     }));
   };
 
   const removeFeature = (index) => {
-    const newFeatures = product.features.filter((_, i) => i !== index);
-    setProduct(prev => ({ ...prev, features: newFeatures }));
+    const newFeatures = product.productFeatures.filter((_, i) => i !== index);
+    setProduct(prev => ({ ...prev, productFeatures: newFeatures }));
   };
 
   const handleSpecificationChange = (key, value) => {
@@ -183,33 +196,35 @@ export default function AdminProductForm() {
         // For uploaded images, we'll use the data URL
         finalImage = imagePreview;
       }
-
       const productData = {
         ...product,
+        id: isEditing ? parseInt(id) : 0,
         image: finalImage,
         imageFile: product.uploadedImage,
         categoryId:1,
         price: parseFloat(product.price),
         productRating: parseInt(product.productRating),
         numberOfReviews: parseInt(product.numberOfReviews),
-        features: product.features.filter(f => f.trim() !== ''),
-        productFeatures: product.features.filter(f => f.trim() !== ''),
+
         printType:product.specifications['Print Type'],
         paperQuality:product.specifications['Paper Quality'],
         turnaroudnTime:parseInt(product.specifications['Turnaround Time']) || 0,
         minimumOrderQuantity:parseInt(product.specifications['Minimum Order']) || 0,
         designSupport:product.specifications['Design Support'],
         delivery:product.specifications['Delivery'],
-        specifications: Object.fromEntries(
-          Object.entries(product.specifications).filter(([_, value]) => value.trim() !== '')
-        )
       };
-      debugger;
+  
       // Remove uploadedImage from the data before saving
       delete productData.uploadedImage;
-
+debugger;
       if (isEditing) {
-        await updateProduct(parseInt(id), productData);
+        debugger;
+        const result = await dispatch(updateProduct(productData)).unwrap();
+        if (result.isSuccess) {
+          navigate('/admin/dashboard');
+        } else {
+          alert('Error creating product: ' + (result.errors?.join(', ') || 'Unknown error'));
+        }
       } else {
         const result = await dispatch(createProduct(productData)).unwrap();
         if (result.isSuccess) {
@@ -488,7 +503,7 @@ export default function AdminProductForm() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Product Features</h2>
             
-            {product.features.map((feature, index) => (
+            {product.productFeatures.map((feature, index) => (
               <div key={index} className="flex items-center mb-4">
                 <input
                   type="text"
@@ -497,7 +512,7 @@ export default function AdminProductForm() {
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter feature"
                 />
-                {product.features.length > 1 && (
+                {product.productFeatures.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}

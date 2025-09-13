@@ -14,7 +14,6 @@ export const createProduct = createAsyncThunk(
   'products/createProduct',
   async (formData) => {
     try {
-      debugger;
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/product/create`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -26,6 +25,29 @@ export const createProduct = createAsyncThunk(
     }
   }
 );
+// Async thunk for updating a product
+export const updateProduct = createAsyncThunk(
+  'products/updateProduct',
+  async ({formData }) => {
+    try {
+      
+      debugger;
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_BASE_URL}/product/update`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  }
+);
+
 
 // Create async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
@@ -122,7 +144,8 @@ const productSlice = createSlice({
         state.status = 'failed';
         state.error = action.error.message;
         state.isSuccess = false;
-      });
+      })
+      ;
   }
 });
 

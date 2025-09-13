@@ -67,7 +67,6 @@ export default function AdminProducts() {
     
     return matchesSearch && matchesCategory;
   }) : [];
-console.log(filteredProducts);
   if (productsStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
