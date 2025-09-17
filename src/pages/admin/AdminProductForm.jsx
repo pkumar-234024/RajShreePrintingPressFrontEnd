@@ -21,6 +21,8 @@ export default function AdminProductForm() {
   const [categories, setCategories] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageType, setImageType] = useState('url'); // 'url' or 'upload'
+  const [childImagePreviews, setChildImagePreviews] = useState([]);
+const childFileInputRef = useRef(null);  // child images
   const [product, setProduct] = useState({
     productName: '',
     description: '',
@@ -34,6 +36,7 @@ export default function AdminProductForm() {
     image: '',
     imageFile : null,
     uploadedImage: null,
+    productiImagesChild : [],
     category: '',
     categoryId:1,
     productRating: '',
@@ -156,6 +159,32 @@ export default function AdminProductForm() {
     }
   };
 
+  const handleChildImagesUpload = (e) => {
+  const files = Array.from(e.target.files);
+  const validFiles = files.filter(file => file.type.startsWith('image/'));
+
+  if (validFiles.length !== files.length) {
+    alert("Some files were not images and were ignored.");
+  }
+
+  const previews = validFiles.map(file => URL.createObjectURL(file));
+
+  setChildImagePreviews(prev => [...prev, ...previews]);
+  setProduct(prev => ({
+    ...prev,
+    productiImagesChild: [...prev.productiImagesChild, ...validFiles]
+  }));
+};
+
+const removeChildImage = (index) => {
+  setChildImagePreviews(prev => prev.filter((_, i) => i !== index));
+  setProduct(prev => ({
+    ...prev,
+    productiImagesChild: prev.productiImagesChild.filter((_, i) => i !== index)
+  }));
+};
+
+
   const handleFeatureChange = (index, value) => {
     const newFeatures = [...product.productFeatures];
     newFeatures[index] = value;
@@ -206,7 +235,7 @@ export default function AdminProductForm() {
         price: parseFloat(product.price),
         productRating: parseInt(product.productRating),
         numberOfReviews: parseInt(product.numberOfReviews),
-
+		productiImagesChild: product.productiImagesChild,
         printType:product.specifications['Print Type'],
         paperQuality:product.specifications['Paper Quality'],
         turnaroudnTime:parseInt(product.specifications['Turnaround Time']) || 0,
@@ -214,11 +243,9 @@ export default function AdminProductForm() {
         designSupport:product.specifications['Design Support'],
         delivery:product.specifications['Delivery'],
       };
-  
       // Remove uploadedImage from the data before saving
       //delete productData.uploadedImage;
       if (isEditing) {
-        debugger;
         const result = await dispatch(updateProduct(productData)).unwrap();
         if (result.isSuccess) {
           navigate('/admin/dashboard');
@@ -498,6 +525,49 @@ export default function AdminProductForm() {
               </div>
             )}
           </div>
+          {/* Child Images */}
+<div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+  <h2 className="text-lg font-semibold text-gray-900 mb-6">Additional Images</h2>
+
+  <input
+    type="file"
+    accept="image/*"
+    multiple
+    onChange={handleChildImagesUpload}
+    className="hidden"
+    ref={childFileInputRef}
+  />
+  <button
+  type="button"
+  onClick={() => childFileInputRef.current?.click()}
+  className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+>
+  <PhotoIcon className="w-5 h-5 mr-2 text-gray-500" />
+  Upload Additional Images
+</button>
+
+
+  {/* Preview */}
+  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+    {childImagePreviews.map((src, index) => (
+      <div key={index} className="relative">
+        <img
+          src={src}
+          alt={`Child preview ${index}`}
+          className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+        />
+        <button
+          type="button"
+          onClick={() => removeChildImage(index)}
+          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"
+        >
+          <TrashIcon className="w-4 h-4" />
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
+
 
           {/* Features */}
           <div className="bg-white rounded-xl shadow-sm p-6">

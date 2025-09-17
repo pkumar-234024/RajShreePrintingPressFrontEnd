@@ -81,11 +81,9 @@ export const deleteProduct = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       console.log(`${import.meta.env.VITE_API_BASE_URL}/product/delete/${id}`);
-      debugger;
       const response = await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/product/delete/${id}`
       );
-      debugger;
       return { id, ...response.data }; // return id so we can update state
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -93,9 +91,19 @@ export const deleteProduct = createAsyncThunk(
   }
 );
 
+export const fetchProductImagesById = createAsyncThunk(
+  'products/fetchProductImageById',
+  async (id) => {
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/productimage/get?Id=${id}`);
+    console.log('fetchProductImagesById response:', response);
+    return response.data;
+  }
+);
+
 
 const initialState = {
   products: [],
+  productImages : [],
   currentProduct: null,
   status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
   singleProductStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
@@ -137,6 +145,18 @@ const productSlice = createSlice({
         state.currentProduct = action.payload.value;
       })
       .addCase(fetchProductById.rejected, (state, action) => {
+        state.singleProductStatus = 'failed';
+        state.singleProductError = action.error.message;
+      })
+      .addCase(fetchProductImagesById.pending, (state) => {
+        state.singleProductStatus = 'loading';
+        state.productImages = null;
+      })
+      .addCase(fetchProductImagesById.fulfilled, (state, action) => {
+        state.singleProductStatus = 'succeeded';
+        state.productImages = action.payload.value;
+      })
+      .addCase(fetchProductImagesById.rejected, (state, action) => {
         state.singleProductStatus = 'failed';
         state.singleProductError = action.error.message;
       })
@@ -192,6 +212,7 @@ export const selectProductsError = (state) => state.products.error;
 export const selectIsSuccess = (state) => state.products.isSuccess;
 export const selectCurrentProduct = (state) => state.products.currentProduct;
 export const selectSingleProductStatus = (state) => state.products.singleProductStatus;
+export const selectProductImages = (state) => state.products.productImages;
 export const selectSingleProductError = (state) => state.products.singleProductError;
 
 export default productSlice.reducer;

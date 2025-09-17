@@ -3,7 +3,7 @@ import { useLocation, Link, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, StarIcon, CheckIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '../context/CartContext';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProductById, selectCurrentProduct, selectSingleProductStatus, selectSingleProductError } from '../redux/productSlice';
+import { fetchProductById,fetchProductImagesById, selectCurrentProduct, selectSingleProductStatus, selectSingleProductError, selectProductImages } from '../redux/productSlice';
 
 export default function CardDetail() {
   const { id } = useParams();
@@ -13,10 +13,11 @@ export default function CardDetail() {
   const product = useSelector(selectCurrentProduct);
   const status = useSelector(selectSingleProductStatus);
   const error = useSelector(selectSingleProductError);
-
+  const productImages = useSelector(selectProductImages);
   useEffect(() => {
     if (id) {
       dispatch(fetchProductById(parseInt(id)));
+      dispatch(fetchProductImagesById(parseInt(id)));
     }
   }, [dispatch, id]);
 
@@ -98,24 +99,30 @@ export default function CardDetail() {
               />
             </div>
             
-            {/* Additional Images Grid */}
+           {/* Additional Images Grid */}
             <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <img 
-                    src={product.image}
-                    alt={`${product.name} view ${i}`}
-                    className="w-full h-24 object-cover"
-                    onError={(e) => {
-                      // Fallback to a placeholder image if the image fails to load
-                      e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Available";
-                      e.target.onerror = null; // Prevent infinite loop
-                    }}
-                  />
-                </div>
-              ))}
+              {console.log('productImages:', productImages)}
+              {Array.isArray(productImages) && productImages.length > 0 ? (
+                productImages.map((imageName, index) => (
+                  <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img 
+                      src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${imageName.imageName}`}
+                      alt={`${product.productName} view ${index + 1}`}
+                      className="w-full h-24 object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Available";
+                        e.target.onerror = null;
+                      }}
+                    />
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 col-span-3">No additional images</p>
+              )}
             </div>
           </div>
+
 
           {/* Right Column - Details */}
           <div className="space-y-6">
