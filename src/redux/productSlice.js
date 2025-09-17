@@ -80,7 +80,6 @@ export const deleteProduct = createAsyncThunk(
   'products/deleteProduct',
   async (id, { rejectWithValue }) => {
     try {
-      console.log(`${import.meta.env.VITE_API_BASE_URL}/product/delete/${id}`);
       const response = await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/product/delete/${id}`
       );
@@ -95,7 +94,6 @@ export const fetchProductImagesById = createAsyncThunk(
   'products/fetchProductImageById',
   async (id) => {
     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/productimage/get?Id=${id}`);
-    console.log('fetchProductImagesById response:', response);
     return response.data;
   }
 );

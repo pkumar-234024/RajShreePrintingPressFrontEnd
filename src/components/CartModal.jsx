@@ -105,7 +105,7 @@ export default function CartModal({ isOpen, onClose, cartItems, updateCart, remo
                     onClick={() => handleProductClick(item.id)}
                     onError={(e) => {
                       // Fallback to a placeholder image if the image fails to load
-                      e.target.src = "https://via.placeholder.com/64x64?text=Image";
+                      e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
                       e.target.onerror = null; // Prevent infinite loop
                     }}
                   />

@@ -229,12 +229,12 @@ const removeChildImage = (index) => {
       const productData = {
         ...product,
         id: isEditing ? parseInt(id) : 0,
-        image: finalImage,
         imageFile: product.uploadedImage,
         categoryId:1,
         price: parseFloat(product.price),
         productRating: parseInt(product.productRating),
         numberOfReviews: parseInt(product.numberOfReviews),
+		productFeatures: product.productFeatures,
 		productiImagesChild: product.productiImagesChild,
         printType:product.specifications['Print Type'],
         paperQuality:product.specifications['Paper Quality'],
@@ -243,6 +243,7 @@ const removeChildImage = (index) => {
         designSupport:product.specifications['Design Support'],
         delivery:product.specifications['Delivery'],
       };
+	  debugger;
       // Remove uploadedImage from the data before saving
       //delete productData.uploadedImage;
       if (isEditing) {
@@ -526,47 +527,47 @@ const removeChildImage = (index) => {
             )}
           </div>
           {/* Child Images */}
-<div className="bg-white rounded-xl shadow-sm p-6 mt-6">
-  <h2 className="text-lg font-semibold text-gray-900 mb-6">Additional Images</h2>
+		<div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+		<h2 className="text-lg font-semibold text-gray-900 mb-6">Additional Images</h2>
 
-  <input
-    type="file"
-    accept="image/*"
-    multiple
-    onChange={handleChildImagesUpload}
-    className="hidden"
-    ref={childFileInputRef}
-  />
-  <button
-  type="button"
-  onClick={() => childFileInputRef.current?.click()}
-  className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
->
-  <PhotoIcon className="w-5 h-5 mr-2 text-gray-500" />
-  Upload Additional Images
-</button>
+		<input
+			type="file"
+			accept="image/*"
+			multiple
+			onChange={handleChildImagesUpload}
+			className="hidden"
+			ref={childFileInputRef}
+		/>
+		<button
+		type="button"
+		onClick={() => childFileInputRef.current?.click()}
+		className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+		>
+		<PhotoIcon className="w-5 h-5 mr-2 text-gray-500" />
+		Upload Additional Images
+		</button>
 
 
-  {/* Preview */}
-  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-    {childImagePreviews.map((src, index) => (
-      <div key={index} className="relative">
-        <img
-          src={src}
-          alt={`Child preview ${index}`}
-          className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-        />
-        <button
-          type="button"
-          onClick={() => removeChildImage(index)}
-          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"
-        >
-          <TrashIcon className="w-4 h-4" />
-        </button>
-      </div>
-    ))}
-  </div>
-</div>
+		{/* Preview */}
+		<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+			{childImagePreviews.map((src, index) => (
+			<div key={index} className="relative">
+				<img
+				src={src}
+				alt={`Child preview ${index}`}
+				className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+				/>
+				<button
+				type="button"
+				onClick={() => removeChildImage(index)}
+				className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"
+				>
+				<TrashIcon className="w-4 h-4" />
+				</button>
+			</div>
+			))}
+		</div>
+		</div>
 
 
           {/* Features */}

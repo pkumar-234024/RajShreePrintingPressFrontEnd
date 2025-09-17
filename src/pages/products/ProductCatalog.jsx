@@ -237,7 +237,7 @@ export default function ProductCatalog() {
                     alt={product.productName}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                      e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
                       e.target.onerror = null;
                     }}
                   />

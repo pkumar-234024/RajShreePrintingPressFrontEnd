@@ -14,12 +14,27 @@ export default function CardDetail() {
   const status = useSelector(selectSingleProductStatus);
   const error = useSelector(selectSingleProductError);
   const productImages = useSelector(selectProductImages);
+  const [selectedImage, setSelectedImage] = useState(null);
+
   useEffect(() => {
     if (id) {
       dispatch(fetchProductById(parseInt(id)));
-      dispatch(fetchProductImagesById(parseInt(id)));
     }
   }, [dispatch, id]);
+
+  // Set the main product image as the default selected image when product loads
+  // and then fetch additional images
+  useEffect(() => {
+    if (product && !selectedImage) {
+      setSelectedImage({
+        imageName: product.imageName,
+        isMainImage: true
+      });
+      
+      // Fetch additional images after master image is loaded
+      dispatch(fetchProductImagesById(parseInt(id)));
+    }
+  }, [product, selectedImage, dispatch, id]);
 
   const handleAddToCart = () => {
     if (product) {
@@ -36,6 +51,18 @@ export default function CardDetail() {
     if (newQuantity >= 1) {
       setQuantity(newQuantity);
     }
+  };
+
+  const handleImageSelect = (imageData) => {
+    setSelectedImage(imageData);
+  };
+
+  // Get the current master image source
+  const getMasterImageSrc = () => {
+    if (selectedImage) {
+      return `${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${selectedImage.imageName}`;
+    }
+    return `${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product?.imageName}`;
   };
 
   if (status === 'loading') {
@@ -86,43 +113,73 @@ export default function CardDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Image */}
           <div className="space-y-6">
+            {/* Master Image */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
               <img 
-                src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
+                src={getMasterImageSrc()}
                 alt={product.productName} 
-                className="w-full h-96 object-cover"
+                className="w-full h-96 object-cover transition-all duration-300"
                 onError={(e) => {
+                  debugger;
                   // Fallback to a placeholder image if the image fails to load
-                  e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Available";
+                  e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
                   e.target.onerror = null; // Prevent infinite loop
                 }}
               />
             </div>
             
-           {/* Additional Images Grid */}
-            <div className="grid grid-cols-3 gap-4">
-              {console.log('productImages:', productImages)}
-              {Array.isArray(productImages) && productImages.length > 0 ? (
-                productImages.map((imageName, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img 
-                      src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${imageName.imageName}`}
-                      alt={`${product.productName} view ${index + 1}`}
-                      className="w-full h-24 object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Available";
-                        e.target.onerror = null;
-                      }}
-                    />
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 col-span-3">No additional images</p>
+            {/* Scrollable Thumbnail Gallery */}
+            <div className="bg-white rounded-xl shadow-lg p-4">
+              <h4 className="text-lg font-semibold mb-3 text-gray-800">Product Images</h4>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {/* Main product image thumbnail */}
+                <div 
+                  onClick={() => handleImageSelect({ imageName: product.imageName, isMainImage: true })}
+                  className={`flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                    selectedImage?.imageName === product.imageName ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <img 
+                    src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
+                    alt={`${product.productName} main`}
+                    className="w-20 h-20 object-cover"
+                    onError={(e) => {
+                      e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
+                      e.target.onerror = null;
+                    }}
+                  />
+                </div>
+
+                {/* Additional images thumbnails */}
+                {Array.isArray(productImages) && productImages.length > 0 && (
+                  productImages.map((image, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => handleImageSelect({ imageName: image.imageName, isMainImage: false })}
+                      className={`flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                        selectedImage?.imageName === image.imageName ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <img 
+                        src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${image.imageName}`}
+                        alt={`${product.productName} view ${index + 1}`}
+                        className="w-20 h-20 object-cover"
+                        onError={(e) => {
+                          e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
+                          e.target.onerror = null;
+                        }}
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              {/* Show message when no additional images */}
+              {(!Array.isArray(productImages) || productImages.length === 0) && (
+                <p className="text-gray-500 text-sm mt-2">Only main product image available</p>
               )}
             </div>
           </div>
-
 
           {/* Right Column - Details */}
           <div className="space-y-6">
@@ -186,6 +243,7 @@ export default function CardDetail() {
             </div>
 
             {/* Features */}
+            {/* {console.log(`products features  ; ;; ${ product.productFeatures}`)} */}
             {product.productFeatures[0] && (
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-xl font-semibold mb-4">Key Features</h3>
@@ -258,4 +316,4 @@ export default function CardDetail() {
       </div>
     </div>
   );
-}    
+}

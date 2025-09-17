@@ -193,7 +193,7 @@ export default function AdminProducts() {
                             src={product.imageName}
                             alt={product.productName}
                             onError={(e) => {
-                              e.target.src = "https://via.placeholder.com/48x48?text=Image";
+                              e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
                               e.target.onerror = null;
                             }}
                           />
