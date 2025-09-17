@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
-import { getProductById, getCategories } from '../../utils/localStorage';
+import { getCategories } from '../../utils/localStorage';
 import { 
   createProduct, 
  updateProduct,
   fetchProductById, 
-  selectCurrentProduct 
+  selectCurrentProduct,
+  deleteProduct
 } from '../../redux/productSlice';
 
 export default function AdminProductForm() {
@@ -215,8 +216,7 @@ export default function AdminProductForm() {
       };
   
       // Remove uploadedImage from the data before saving
-      delete productData.uploadedImage;
-debugger;
+      //delete productData.uploadedImage;
       if (isEditing) {
         debugger;
         const result = await dispatch(updateProduct(productData)).unwrap();

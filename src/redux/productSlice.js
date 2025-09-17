@@ -28,10 +28,8 @@ export const createProduct = createAsyncThunk(
 // Async thunk for updating a product
 export const updateProduct = createAsyncThunk(
   'products/updateProduct',
-  async ({formData }) => {
+  async (formData ) => {
     try {
-      
-      debugger;
       const response = await axios.patch(
         `${import.meta.env.VITE_API_BASE_URL}/product/update`,
         formData,
@@ -58,7 +56,6 @@ export const fetchProducts = createAsyncThunk(
       if (!response.data) {
         throw new Error('No data received from API');
       }
-      
       // Transform the API response to plain objects
       const products = Product.fromAPIList(response.data);
       return products;
@@ -75,6 +72,24 @@ export const fetchProductById = createAsyncThunk(
   async (id) => {
     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/get?Id=${id}`);
     return response.data;
+  }
+);
+
+// Async thunk for deleting a product
+export const deleteProduct = createAsyncThunk(
+  'products/deleteProduct',
+  async (id, { rejectWithValue }) => {
+    try {
+      console.log(`${import.meta.env.VITE_API_BASE_URL}/product/delete/${id}`);
+      debugger;
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/product/delete/${id}`
+      );
+      debugger;
+      return { id, ...response.data }; // return id so we can update state
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
   }
 );
 
@@ -145,6 +160,27 @@ const productSlice = createSlice({
         state.error = action.error.message;
         state.isSuccess = false;
       })
+      .addCase(deleteProduct.pending, (state) => {
+    state.status = 'loading';
+    state.isSuccess = false;
+    state.successMessage = '';
+    state.errors = [];
+    state.validationErrors = [];
+  })
+  .addCase(deleteProduct.fulfilled, (state, action) => {
+    state.status = 'succeeded';
+    // remove deleted product from array
+    state.products = state.products.filter(p => p.id !== action.payload.id);
+    state.isSuccess = action.payload.isSuccess ?? true;
+    state.successMessage = action.payload.successMessage ?? 'Product deleted successfully';
+    state.errors = action.payload.errors ?? [];
+    state.validationErrors = action.payload.validationErrors ?? [];
+  })
+  .addCase(deleteProduct.rejected, (state, action) => {
+    state.status = 'failed';
+    state.error = action.error.message;
+    state.isSuccess = false;
+  })
       ;
   }
 });

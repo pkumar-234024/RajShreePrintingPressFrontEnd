@@ -13,8 +13,8 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import { fetchProducts, selectAllProducts, selectProductsStatus } from '../../redux/productSlice';
-import { getOrders, getCategories } from '../../utils/localStorage';
+import { fetchProducts, selectAllProducts, selectProductsStatus, deleteProduct } from '../../redux/productSlice';
+import { getOrders } from '../../utils/localStorage';
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
@@ -80,10 +80,15 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteProduct = async (productId) => {
+    debugger;
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        // You'll need to implement the delete API call here
-        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/product/delete?Id=${productId}`);
+        const result = dispatch(deleteProduct(productId)).unwrap();
+        if (result.isSuccess) {
+          navigate('/admin/dashboard');
+        } else {
+          alert('Failed to Delete product: ' + (result.errors?.join(', ') || 'Unknown error'));
+        }
         dispatch(fetchProducts()); // Reload products after deletion
       } catch (error) {
         console.error('Error deleting product:', error);
