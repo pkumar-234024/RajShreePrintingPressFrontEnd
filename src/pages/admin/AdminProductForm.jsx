@@ -43,6 +43,7 @@ const childFileInputRef = useRef(null);  // child images
     numberOfReviews: '',
     inStock: true,
     productFeatures: [],
+    CommaSeperatedProductFeatures:'',
     features: [''],
     specifications: {
       'Print Type': '',
@@ -71,18 +72,16 @@ const childFileInputRef = useRef(null);  // child images
 
   useEffect(() => {
   if (reduxProduct && isEditing) {
+    const features = Array.isArray(reduxProduct.commaSeperatedProductFeatures)
+  ? reduxProduct.commaSeperatedProductFeatures
+  : reduxProduct.commaSeperatedProductFeatures
+    ? reduxProduct.commaSeperatedProductFeatures.split(",").map(f => f.trim())
+    : [""];
+  
     setProduct({
       ...reduxProduct,
       uploadedImage: null,
-      productFeatures: (() => {
-  if (Array.isArray(reduxProduct.productFeatures)) {
-    return reduxProduct.productFeatures;
-  }
-  if (typeof reduxProduct.productFeatures === "string") {
-    return reduxProduct.productFeatures[0].split(",").map(f => f.trim());
-  }
-  return [""];
-})(),
+      productFeatures: features.length > 0 ? features : [''],
       specifications: {
         'Print Type': reduxProduct.printType || '',
         'Paper Quality': reduxProduct.paperQuality || '',
@@ -236,6 +235,7 @@ const removeChildImage = (index) => {
         numberOfReviews: parseInt(product.numberOfReviews),
 		productFeatures: product.productFeatures,
 		productiImagesChild: product.productiImagesChild,
+    CommaSeperatedProductFeatures: product.productFeatures.join(","),
         printType:product.specifications['Print Type'],
         paperQuality:product.specifications['Paper Quality'],
         turnaroudnTime:parseInt(product.specifications['Turnaround Time']) || 0,
@@ -243,7 +243,6 @@ const removeChildImage = (index) => {
         designSupport:product.specifications['Design Support'],
         delivery:product.specifications['Delivery'],
       };
-	  debugger;
       // Remove uploadedImage from the data before saving
       //delete productData.uploadedImage;
       if (isEditing) {

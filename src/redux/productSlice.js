@@ -66,6 +66,24 @@ export const fetchProducts = createAsyncThunk(
   }
 );
 
+//fetch products by PageIndex
+export const fetchProductsByPageIndex = createAsyncThunk(
+  'products/fetchProductsByIndex',
+  async (index, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/listbyindex?PageIndex=${index}`);
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      const products = Product.fromAPIList(response.data);
+      return products;
+    } catch (error) {
+      alert('Error in fetchProducts thunk:', error);
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 // Create async thunk for fetching a single product by ID
 export const fetchProductById = createAsyncThunk(
   'products/fetchProductById',
@@ -131,6 +149,21 @@ const productSlice = createSlice({
         state.validationErrors = [];
       })
       .addCase(fetchProducts.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      })
+      .addCase(fetchProductsByPageIndex.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchProductsByPageIndex.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.products = action.payload;
+        state.isSuccess = true;
+        state.successMessage = '';
+        state.errors = [];
+        state.validationErrors = [];
+      })
+      .addCase(fetchProductsByPageIndex.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
       })

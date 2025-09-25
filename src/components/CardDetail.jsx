@@ -15,6 +15,7 @@ export default function CardDetail() {
   const error = useSelector(selectSingleProductError);
   const productImages = useSelector(selectProductImages);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [features, setFeatures] = useState([]);
 
   useEffect(() => {
     if (id) {
@@ -36,6 +37,14 @@ export default function CardDetail() {
     }
   }, [product, selectedImage, dispatch, id]);
 
+  useEffect(() => {
+  if (product) {
+    const parsedFeatures = product.commaSeperatedProductFeatures
+      ? product.commaSeperatedProductFeatures.split(",").map(f => f.trim())
+      : [];
+    setFeatures(parsedFeatures);
+  }
+}, [product]);
   const handleAddToCart = () => {
     if (product) {
       addToCart({
@@ -120,7 +129,6 @@ export default function CardDetail() {
                 alt={product.productName} 
                 className="w-full h-96 object-cover transition-all duration-300"
                 onError={(e) => {
-                  debugger;
                   // Fallback to a placeholder image if the image fails to load
                   e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
                   e.target.onerror = null; // Prevent infinite loop
@@ -243,20 +251,21 @@ export default function CardDetail() {
             </div>
 
             {/* Features */}
-            {/* {console.log(`products features  ; ;; ${ product.productFeatures}`)} */}
-            {product.productFeatures[0] && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-semibold mb-4">Key Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {product.productFeatures[0].split(',').map((feature, index) => (
-                    <div key={index} className="flex items-center">
-                      <CheckIcon className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </div>
-                  ))}
-                </div>
+            {features.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-xl font-semibold mb-4">Key Features</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {features.map((feature, index) => (
+                  <div key={index} className="flex items-center">
+                    <CheckIcon className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span className="text-gray-700">{feature}</span>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+
+
 
             {/* Specifications */}
             <div className="bg-white rounded-xl shadow-lg p-6">

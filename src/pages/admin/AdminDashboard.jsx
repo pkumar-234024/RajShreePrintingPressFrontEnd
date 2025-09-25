@@ -80,7 +80,6 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    debugger;
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         const result = dispatch(deleteProduct(productId)).unwrap();
