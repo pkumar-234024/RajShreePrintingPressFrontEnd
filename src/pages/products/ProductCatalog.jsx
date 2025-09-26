@@ -74,7 +74,7 @@ export default function ProductCatalog() {
     }
 
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(p => p.categoryId.toString() === selectedCategory);
+      filtered = filtered.filter(p => p.categoryId === selectedCategory);
     }
 
     filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
@@ -148,6 +148,11 @@ export default function ProductCatalog() {
 
   const calculatedTotalPages = getCalculatedTotalPages();
 
+  const handleCategoryChange = (e) => {
+    const { value} = e.target;
+    setSelectedCategory(value-1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
@@ -167,10 +172,10 @@ export default function ProductCatalog() {
 
             <select
               value={selectedCategory}
-              onChange={e => setSelectedCategory(e.target.value)}
+              onChange={handleCategoryChange}
               className="px-4 py-3 border border-gray-300 rounded-lg"
             >
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map((c, index) => <option key={c} value={index}>{c}</option>)}
             </select>
 
             <select

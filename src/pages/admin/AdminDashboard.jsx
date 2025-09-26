@@ -13,9 +13,8 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
-import { fetchProducts, selectAllProducts, selectProductsStatus, deleteProduct } from '../../redux/productSlice';
-import { getOrders } from '../../utils/localStorage';
-
+import { fetchProducts, selectAllProducts, selectProductsStatus, deleteProduct,fetchProductsByPageIndex } from '../../redux/productSlice';
+import { getOrders,getCategories } from '../../utils/localStorage';
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
@@ -28,6 +27,7 @@ export default function AdminDashboard() {
   const dispatch = useDispatch();
   const products = useSelector(selectAllProducts);
   const productsStatus = useSelector(selectProductsStatus);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -41,7 +41,9 @@ export default function AdminDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      dispatch(dispatch(fetchProductsByPageIndex(1)));
+      await dispatch(fetchProductsByPageIndex(1));
+      const categoriesData = getCategories();
+      setCategories(categoriesData.filter(cat => cat !== 'All'));
       const ordersData = getOrders();
       setOrders(ordersData);
     } catch (error) {
@@ -271,7 +273,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {product.category}
+                        {categories[product.categoryId]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

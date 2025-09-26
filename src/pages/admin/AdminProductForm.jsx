@@ -38,7 +38,7 @@ const childFileInputRef = useRef(null);  // child images
     uploadedImage: null,
     productiImagesChild : [],
     category: '',
-    categoryId:1,
+    categoryId:0,
     productRating: '',
     numberOfReviews: '',
     inStock: true,
@@ -111,7 +111,19 @@ const childFileInputRef = useRef(null);  // child images
       setImagePreview(value);
     }
   };
+const handleCategoryChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProduct(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+      categoryId: categories.indexOf(value)  // +1 because 'All' is excluded
+    }));
 
+    // Update image preview when URL changes
+    if (name === 'image' && imageType === 'url') {
+      setImagePreview(value);
+    }
+  };
   const handleImageTypeChange = (type) => {
     setImageType(type);
     if (type === 'url') {
@@ -225,17 +237,18 @@ const removeChildImage = (index) => {
         // For uploaded images, we'll use the data URL
         finalImage = imagePreview;
       }
+      debugger;
       const productData = {
         ...product,
         id: isEditing ? parseInt(id) : 0,
         imageFile: product.uploadedImage,
-        categoryId:1,
+        categoryId:product.categoryId,
         price: parseFloat(product.price),
         productRating: parseInt(product.productRating),
         numberOfReviews: parseInt(product.numberOfReviews),
-		productFeatures: product.productFeatures,
-		productiImagesChild: product.productiImagesChild,
-    CommaSeperatedProductFeatures: product.productFeatures.join(","),
+		    productFeatures: product.productFeatures,
+		    productiImagesChild: product.productiImagesChild,
+        CommaSeperatedProductFeatures: product.productFeatures.join(","),
         printType:product.specifications['Print Type'],
         paperQuality:product.specifications['Paper Quality'],
         turnaroudnTime:parseInt(product.specifications['Turnaround Time']) || 0,
@@ -312,21 +325,20 @@ const removeChildImage = (index) => {
                   placeholder="Enter product name"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
                 </label>
                 <select
                   name="category"
-                  value={product.category}
-                  onChange={handleInputChange}
+                  value={categories[product.categoryId]}
+                  onChange={handleCategoryChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select category</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
+                  {categories.map((category, index) => (
+                    <option key={category} value={categories[index]}>{category}</option>
                   ))}
                 </select>
               </div>
