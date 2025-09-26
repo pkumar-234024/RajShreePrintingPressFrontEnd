@@ -37,7 +37,7 @@ export default function HeroSection() {
               <span className="sr-only">RajShree Printing Press</span>
               <img
                 alt=""
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+                src="../../public/logo.png"
                 className="h-8 w-auto"
               />
             </a>
