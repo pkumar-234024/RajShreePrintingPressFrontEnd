@@ -8,16 +8,17 @@ const Contactus = () => {
           <div className="-mx-4 flex flex-wrap lg:justify-between">
             <div className="w-full px-4 lg:w-1/2 xl:w-6/12">
               <div className="mb-12 max-w-[570px] lg:mb-0">
-                <span className="mb-4 block text-base font-semibold text-primary">
+                <span className="mb-4 block text-base font-bold text-primary">
                   Contact Us
                 </span>
                 <h2 className="mb-6 text-[32px] font-bold uppercase text-dark dark:text-white sm:text-[40px] lg:text-[36px] xl:text-[40px]">
                   GET IN TOUCH WITH US
                 </h2>
-                <p className="mb-9 text-base leading-relaxed text-body-color dark:text-dark-6">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eius tempor incididunt ut labore e dolore magna aliqua. Ut
-                  enim adiqua minim veniam quis nostrud exercitation ullamco
+                <p className="mb-9 text-base font-bold leading-relaxed text-body-color dark:text-dark-6">
+                  Let’s turn your thoughts into beautiful prints. Get in touch with Rajshree Printing Press today!
+                </p>
+                <p className="mb-9 text-base font-bold leading-relaxed text-body-color dark:text-dark-6">
+                  “आपके विचारों को खूबसूरत प्रिंट में बदलें। आज ही राजश्री प्रिंटिंग प्रेस से जुड़ें!”
                 </p>
                 <div className="mb-8 flex w-full max-w-[370px]">
                   <div className="mr-6 flex h-[60px] w-full max-w-[60px] items-center justify-center overflow-hidden rounded bg-primary/5 text-primary sm:h-[70px] sm:max-w-[70px]">
@@ -38,8 +39,8 @@ const Contactus = () => {
                     <h4 className="mb-1 text-xl font-bold text-dark dark:text-white">
                       Our Location
                     </h4>
-                    <p className="text-base text-body-color dark:text-dark-6">
-                      99 S.t Jomblo Park Pekanbaru 28292. Indonesia
+                    <p className="text-base font-bold text-body-color dark:text-dark-6">
+                      RajShree Press near Pandey mod Zamania, Ghazipur(232340)
                     </p>
                   </div>
                 </div>
@@ -78,8 +79,8 @@ const Contactus = () => {
                     <h4 className="mb-1 text-xl font-bold text-dark dark:text-white">
                       Phone Number
                     </h4>
-                    <p className="text-base text-body-color dark:text-dark-6">
-                      (+62)81 414 257 9980
+                    <p className="text-base font-bold text-body-color dark:text-dark-6">
+                      +91 7007685244
                     </p>
                   </div>
                 </div>
@@ -103,7 +104,7 @@ const Contactus = () => {
                     <h4 className="mb-1 text-xl font-bold text-dark dark:text-white">
                       Email Address
                     </h4>
-                    <p className="text-base text-body-color dark:text-dark-6">
+                    <p className="text-base font-bold text-body-color dark:text-dark-6">
                       info@yourdomain.com
                     </p>
                   </div>

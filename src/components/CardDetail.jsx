@@ -203,9 +203,9 @@ export default function CardDetail() {
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-gray-600">
+                {/* <span className="ml-2 text-sm text-gray-600">
                   {product.productRating} ({product.numberOfReviews} reviews)
-                </span>
+                </span> */}
               </div>
               <p className="text-gray-600 text-lg leading-relaxed">{product.description}</p>
             </div>

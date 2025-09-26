@@ -41,7 +41,7 @@ export default function AdminDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      dispatch(fetchProducts());
+      dispatch(dispatch(fetchProductsByPageIndex(1)));
       const ordersData = getOrders();
       setOrders(ordersData);
     } catch (error) {

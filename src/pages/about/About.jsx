@@ -671,10 +671,10 @@ Get in touch with us — we’re always happy to help!
 <p className="mb-5 text-base text-body-color dark:text-dark-6">
 
 <span className="block mb-4 text-lg font-semibold text-primary">
-                � Address&nbsp;: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;123 Main Street, Anytown, USA
+                � Address&nbsp;: &nbsp;&nbsp; RajShree Press near Pandey mod Zamania, Ghazipur(232340)
                 </span>
                 <span className="block mb-4 text-lg font-semibold text-primary">
-                �📞 Phone/WhatsApp&nbsp;: &nbsp;+91 9632587410
+                �📞 Phone/WhatsApp&nbsp;: &nbsp;+91 7007685244
                 </span>
                 <span className="block mb-4 text-lg font-semibold text-primary">
                 🌐 Website&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp; www.rajshreeprintingpress.com

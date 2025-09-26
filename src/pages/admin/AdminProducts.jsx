@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import { 
   ArrowLeftIcon, 
   PlusIcon, 
@@ -10,46 +9,40 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline';
-import { fetchProducts, selectAllProducts, selectProductsStatus } from '../../redux/productSlice';
+import { 
+  fetchProductsByPageIndex, 
+  selectAllProducts, 
+  selectProductsStatus,  
+} from '../../redux/productSlice';
 import { getCategories } from '../../utils/localStorage';
-import { Alert } from '@material-tailwind/react';
+import axios from 'axios';
 
 export default function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  
+
+  // ✅ Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const products = useSelector(selectAllProducts);
   const productsStatus = useSelector(selectProductsStatus);
+  const totalPages = 100; // assume backend sends total pages
 
   useEffect(() => {
-    loadData();
-  }, [dispatch]);
-
-  // Add a debug effect to log products state
-  useEffect(() => {
-  }, [products, productsStatus]);
-
-  const loadData = async () => {
-    try {
-      // Log the API response directly
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/product/list`);      
-      dispatch(fetchProducts());
-      const categoriesData = getCategories() || [];
-      setCategories(categoriesData);
-    } catch (error) {
-      Alert('Error loading data:', error);
-    }
-  };
+    dispatch(fetchProductsByPageIndex(currentPage));
+    const categoriesData = getCategories() || [];
+    setCategories(categoriesData);
+  }, [dispatch, currentPage]);
 
   const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/product/delete?Id=${productId}`);
-        dispatch(fetchProducts()); // Reload products after deletion
+        dispatch(fetchProductsByPageIndex(currentPage)); // reload current page
         alert('Product deleted successfully');
       } catch (error) {
         alert('Error deleting product: ' + (error.response?.data?.message || error.message));
@@ -57,16 +50,35 @@ export default function AdminProducts() {
     }
   };
 
-  const filteredProducts = Array.isArray(products) ? products.filter(product => {    
-    if (!product?.productName || !product?.description) {
-      return false;
-    }    
-    const matchesSearch = product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.categoryId.toString() === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  }) : [];
+  // ✅ Filter on the server-loaded page only
+  const filteredProducts = Array.isArray(products)
+    ? products.filter((product) => {
+        if (!product?.productName || !product?.description) return false;
+
+        const matchesSearch =
+          product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesCategory =
+          selectedCategory === 'all' ||
+          product.categoryId.toString() === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+      })
+    : [];
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
   if (productsStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -127,8 +139,10 @@ export default function AdminProducts() {
               className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
 
@@ -145,7 +159,7 @@ export default function AdminProducts() {
           {/* Results Count */}
           <div className="mt-4 flex justify-between items-center">
             <p className="text-gray-600">
-              Showing {filteredProducts.length} of {products.length} products
+              Showing {filteredProducts.length} products (Page {currentPage} of {totalPages})
             </p>
           </div>
         </div>
@@ -156,24 +170,12 @@ export default function AdminProducts() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -190,7 +192,7 @@ export default function AdminProducts() {
                         <div className="flex items-center">
                           <img
                             className="h-12 w-12 rounded-lg object-cover"
-                            src={product.imageName}
+                            src={`${import.meta.env.VITE_API_BASE_URL}/uploadimage/image/${product.imageName}`}
                             alt={product.productName}
                             onError={(e) => {
                               e.target.src = "https://cdn.pixabay.com/photo/2018/01/04/15/51/404-error-3060993_1280.png";
@@ -208,9 +210,7 @@ export default function AdminProducts() {
                           {product.category}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ₹{product.price}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹{product.price}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <span className="text-sm text-gray-900">{product.productRating}</span>
@@ -220,9 +220,7 @@ export default function AdminProducts() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.inStock 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                          product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
                           {product.inStock ? 'In Stock' : 'Out of Stock'}
                         </span>
@@ -252,7 +250,38 @@ export default function AdminProducts() {
             </table>
           </div>
         </div>
+
+        {/* ✅ Pagination Controls */}
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={goToPrevPage}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === 1
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            Previous
+          </button>
+
+          <span className="text-gray-700">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === totalPages
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
-} 
+}

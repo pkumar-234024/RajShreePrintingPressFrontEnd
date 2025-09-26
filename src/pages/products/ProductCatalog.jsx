@@ -20,7 +20,7 @@ export default function ProductCatalog() {
   const [pageLoading, setPageLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(2);
+  const [productsPerPage] = useState(12);
 
   const { addToCart } = useCart();
   const navigate = useNavigate();
